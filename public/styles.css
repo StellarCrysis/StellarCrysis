@@ -1,0 +1,21 @@
+html, body {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+}
+
+#canvas-container {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  justify-content: center;
+  align-items: center;
+  background-color: #000000;
+}
+
+#view {
+  display: flex;
+  width: 1024px;
+  height: 768px;
+  outline: none;
+}

@@ -1,0 +1,31 @@
+{
+  "name": "babylonjs-typescript-starter",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node --max-old-space-size=8192 node_modules/webpack-dev-server/bin/webpack-dev-server.js --config webpack.config.dev.js",
+    "build": "webpack --config webpack.config.prod.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@babylonjs/inspector": "^5.1.0",
+    "babylonjs": "^5.5.5",
+    "babylonjs-charactercontroller": "^0.4.4-alpha.1",
+    "babylonjs-gui": "^5.5.5",
+    "copy-webpack-plugin": "^10.2.4",
+    "handlebars-loader": "^1.7.1",
+    "html-webpack-plugin": "^5.5.0",
+    "ts-loader": "^9.2.8",
+    "typescript": "^4.6.3",
+    "webpack": "^5.72.0",
+    "webpack-cli": "^4.9.2",
+    "webpack-dev-server": "^4.8.1",
+    "webpack-glsl-loader": "^1.0.1"
+  },
+  "dependencies": {
+    "@babylonjs/core": ""
+  }
+}
