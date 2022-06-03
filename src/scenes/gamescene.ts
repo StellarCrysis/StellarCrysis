@@ -13,29 +13,9 @@ export class GameScene extends BABYLON.Scene {
 
     _inputVector: BABYLON.Vector3
 
-    constructor(engine, view) {
-        super(engine)
-
-        this._view = view
-    }
-
-    async enter(): Promise<void> {
-        this._inputVector = new BABYLON.Vector3(0, 0, 0)
-
-        const camera = new BABYLON.ArcRotateCamera("camera", -Math.PI / 2, Math.PI / 2.5, 3, new BABYLON.Vector3(0, 0, 2.5), this);
-        camera.position = new BABYLON.Vector3(0, 0, 20)
-
-        var light = new BABYLON.HemisphericLight("point", new BABYLON.Vector3(0.1, 0.4, -1), this);
-        let result = await BABYLON.SceneLoader.ImportMeshAsync(
-            "",
-            "./models/",
-            "ship.glb",
-            this
-        )
-
-        this._ship = result.meshes[0]
-
-        const skybox = BABYLON.MeshBuilder.CreateBox("skyBox", { size: 1000 }, this);
+    // Создаёт космос
+    _createSkybox() {
+        const skybox = BABYLON.MeshBuilder.CreateBox("skyBox", { size: 100 }, this);
         const skyboxMaterial = new BABYLON.StandardMaterial("skyBox", this);
         skyboxMaterial.backFaceCulling = false;
         skyboxMaterial.reflectionTexture = new BABYLON.CubeTexture("textures/skybox/skybox", this);
@@ -43,6 +23,62 @@ export class GameScene extends BABYLON.Scene {
         skyboxMaterial.diffuseColor = new BABYLON.Color3(0, 0, 0);
         skyboxMaterial.specularColor = new BABYLON.Color3(0, 0, 0);
         skybox.material = skyboxMaterial;
+    }
+
+    // Создаёт корабль
+    async _createShip() {
+        let result = await BABYLON.SceneLoader.ImportMeshAsync(
+            "",
+            "./models/",
+            "ship.glb",
+            this
+        )
+
+        const particleSystem = new BABYLON.ParticleSystem("particles", 2000, this)
+        particleSystem.particleTexture = new BABYLON.Texture("textures/flare.png")
+        particleSystem.emitter = new BABYLON.Vector3(0, 0, 2)
+        particleSystem.start();
+
+        particleSystem.minSize = 0.5
+        particleSystem.maxSize = 1
+
+        particleSystem.direction1 = new BABYLON.Vector3(0, 1, 10)
+        particleSystem.direction2 = new BABYLON.Vector3(0, -1, 10)
+
+        particleSystem.minLifeTime = 0.01
+        particleSystem.maxLifeTime = 0.3
+
+        particleSystem.emitRate = 500;
+        particleSystem.minEmitBox = new BABYLON.Vector3(-0.2, -0.2, 0)
+        particleSystem.maxEmitBox = new BABYLON.Vector3(0.2, 0.2, 0)
+
+        this.onBeforeRenderObservable.add(x => {
+            if (x.deltaTime == undefined)
+                return;
+
+            let pos = this._ship.position.clone()
+            pos.z = 2
+            particleSystem.emitter = pos;
+        })
+
+        this._ship = result.meshes[0]
+    }
+
+    constructor(engine, view) {
+        super(engine)
+
+        this._view = view
+        this._inputVector = new BABYLON.Vector3(0, 0, 0)
+    }
+
+    async enter(): Promise<void> {
+        const camera = new BABYLON.ArcRotateCamera("camera", -Math.PI / 2, Math.PI / 2.5, 3, new BABYLON.Vector3(0, 0, 2.5), this);
+        camera.position = new BABYLON.Vector3(0, 3, 20)
+        var light = new BABYLON.HemisphericLight("point", new BABYLON.Vector3(0.1, 0.4, -1), this);
+
+        this._createSkybox()
+
+        await this._createShip()
 
         let angleZ = 0
         let angleX = 0
