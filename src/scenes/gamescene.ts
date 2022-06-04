@@ -15,7 +15,7 @@ export class GameScene extends BABYLON.Scene {
 
     // Создаёт космос
     _createSkybox() {
-        const skybox = BABYLON.MeshBuilder.CreateBox("skyBox", { size: 100 }, this);
+        const skybox = BABYLON.MeshBuilder.CreateBox("skyBox", { size: 500 }, this);
         const skyboxMaterial = new BABYLON.StandardMaterial("skyBox", this);
         skyboxMaterial.backFaceCulling = false;
         skyboxMaterial.reflectionTexture = new BABYLON.CubeTexture("textures/skybox/skybox", this);
@@ -34,6 +34,7 @@ export class GameScene extends BABYLON.Scene {
             this
         )
 
+        // Создаёт выхлоп из движка корабля
         const particleSystem = new BABYLON.ParticleSystem("particles", 2000, this)
         particleSystem.particleTexture = new BABYLON.Texture("textures/flare.png")
         particleSystem.emitter = new BABYLON.Vector3(0, 0, 2)
@@ -62,24 +63,8 @@ export class GameScene extends BABYLON.Scene {
         })
 
         this._ship = result.meshes[0]
-    }
 
-    constructor(engine, view) {
-        super(engine)
-
-        this._view = view
-        this._inputVector = new BABYLON.Vector3(0, 0, 0)
-    }
-
-    async enter(): Promise<void> {
-        const camera = new BABYLON.ArcRotateCamera("camera", -Math.PI / 2, Math.PI / 2.5, 3, new BABYLON.Vector3(0, 0, 2.5), this);
-        camera.position = new BABYLON.Vector3(0, 3, 20)
-        var light = new BABYLON.HemisphericLight("point", new BABYLON.Vector3(0.1, 0.4, -1), this);
-
-        this._createSkybox()
-
-        await this._createShip()
-
+        // Обрабатывает движение корабля
         let angleZ = 0
         let angleX = 0
         this.onBeforeRenderObservable.add(x => {
@@ -94,6 +79,7 @@ export class GameScene extends BABYLON.Scene {
             this._ship.rotation = this._ship.rotation.set(angleX, 180 * 0.0174533, angleZ)
         })
 
+        // Обрабатывает ввод от игрока
         this.onKeyboardObservable.add(x => {
 
             switch (x.type) {
@@ -129,6 +115,82 @@ export class GameScene extends BABYLON.Scene {
                     break;
             }
         });
+    }
+
+    // Создаёт врагов
+    async _createEnemySpawner() {
+        function getRandomArbitrary(min, max) {
+            return Math.random() * (max - min) + min;
+        }
+
+        let result = await BABYLON.SceneLoader.ImportMeshAsync(
+            "",
+            "./models/",
+            "enemy.glb",
+            this,
+        )
+
+        let enemy = result.meshes[0] as BABYLON.InstancedMesh
+        enemy.rotate(BABYLON.Axis.Y, BABYLON.Angle.FromDegrees(180).radians())
+        enemy.position.z = -100
+        enemy.setEnabled(false)
+
+        let instances = []
+
+        function addEnemyInstance() {
+            enemy.setEnabled(true)
+            let instance = enemy.clone("inst")
+            instance.position.x = getRandomArbitrary(-5, 5)
+            instance.position.y = getRandomArbitrary(-5, 5)
+            enemy.position.z += getRandomArbitrary(-50, 10)
+            instances.push(instance)
+            enemy.setEnabled(false)
+        }
+
+
+        enemy.setEnabled(true)
+        for (var i = 0; i < 5; i++) {
+            addEnemyInstance()
+        }        
+
+        let ticker = 0
+
+        this.onBeforeRenderObservable.add(x => {
+            if (x.deltaTime == undefined)
+                return;
+
+            if (ticker > 1000) {                
+                addEnemyInstance()
+                ticker = 0
+            }
+
+
+            instances.forEach(element => {
+                element.position.z += 0.01 * x.deltaTime
+                if (element.position.z > 10)
+                    element.dispose()
+            });
+
+            ticker += x.deltaTime            
+        })
+    }
+
+    constructor(engine, view) {
+        super(engine)
+
+        this._view = view
+        this._inputVector = new BABYLON.Vector3(0, 0, 0)
+    }
+
+    async enter(): Promise<void> {
+        const camera = new BABYLON.ArcRotateCamera("camera", -Math.PI / 2, Math.PI / 2.5, 3, new BABYLON.Vector3(0, 0, 2.5), this);
+        camera.position = new BABYLON.Vector3(0, 3, 20)
+
+        var light = new BABYLON.HemisphericLight("point", new BABYLON.Vector3(0.1, 0.4, -1), this);
+
+        this._createSkybox()
+        await this._createShip()
+        await this._createEnemySpawner()
 
         // this.debugLayer.show({
         //     embedMode: true
