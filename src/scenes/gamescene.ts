@@ -5,6 +5,11 @@ import "@babylonjs/loaders";
 import * as GUI from "@babylonjs/gui"
 import * as BABYLON from "@babylonjs/core"
 
+// Возвращает случайное число между min и max
+function _getRandomArbitrary(min, max): number {
+    return Math.random() * (max - min) + min;
+}
+
 // Основная игровая сцена
 export class GameScene extends BABYLON.Scene {
     _view: HTMLCanvasElement
@@ -13,8 +18,8 @@ export class GameScene extends BABYLON.Scene {
 
     _inputVector: BABYLON.Vector3
 
-    // Создаёт космос
-    _createSkybox() {
+    // Создаёт окружение
+    _createEnvironment() {
         const skybox = BABYLON.MeshBuilder.CreateBox("skyBox", { size: 500 }, this);
         const skyboxMaterial = new BABYLON.StandardMaterial("skyBox", this);
         skyboxMaterial.backFaceCulling = false;
@@ -23,6 +28,41 @@ export class GameScene extends BABYLON.Scene {
         skyboxMaterial.diffuseColor = new BABYLON.Color3(0, 0, 0);
         skyboxMaterial.specularColor = new BABYLON.Color3(0, 0, 0);
         skybox.material = skyboxMaterial;
+
+        const myPoints = [
+            new BABYLON.Vector3(0, 0, 0),
+            new BABYLON.Vector3(0, 0, 5),
+        ]
+
+        let line = BABYLON.MeshBuilder.CreateLines("lines", { points: myPoints });
+        line.position.z = -200
+
+        let time = 0
+        let instances = []
+
+        this.onBeforeRenderObservable.add(x => {
+            if (x.deltaTime == undefined)
+                return;
+
+            if (time > 100) {
+                let nline = line.clone("nline")
+                nline.position.x = _getRandomArbitrary(-15, 15)
+                nline.position.y = _getRandomArbitrary(-15, 15)
+                instances.push(nline)
+
+                time = 0
+            }
+
+            instances.forEach((element, i) => {
+                element.position.z += 0.2 * x.deltaTime
+                if (element.position.z > 10) {
+                    element.dispose()
+                    instances.splice(i, 1);                    
+                }
+            });
+
+            time += x.deltaTime
+        })
     }
 
     // Создаёт корабль
@@ -119,10 +159,6 @@ export class GameScene extends BABYLON.Scene {
 
     // Создаёт врагов
     async _createEnemySpawner() {
-        function getRandomArbitrary(min, max) {
-            return Math.random() * (max - min) + min;
-        }
-
         let result = await BABYLON.SceneLoader.ImportMeshAsync(
             "",
             "./models/",
@@ -140,9 +176,9 @@ export class GameScene extends BABYLON.Scene {
         function addEnemyInstance() {
             enemy.setEnabled(true)
             let instance = enemy.clone("inst")
-            instance.position.x = getRandomArbitrary(-5, 5)
-            instance.position.y = getRandomArbitrary(-5, 5)
-            enemy.position.z += getRandomArbitrary(-50, 10)
+            instance.position.x = _getRandomArbitrary(-5, 5)
+            instance.position.y = _getRandomArbitrary(-5, 5)
+            enemy.position.z += _getRandomArbitrary(-50, 10)
             instances.push(instance)
             enemy.setEnabled(false)
         }
@@ -151,7 +187,7 @@ export class GameScene extends BABYLON.Scene {
         enemy.setEnabled(true)
         for (var i = 0; i < 5; i++) {
             addEnemyInstance()
-        }        
+        }
 
         let ticker = 0
 
@@ -159,19 +195,21 @@ export class GameScene extends BABYLON.Scene {
             if (x.deltaTime == undefined)
                 return;
 
-            if (ticker > 1000) {                
+            if (ticker > 1500) {
                 addEnemyInstance()
                 ticker = 0
             }
 
 
-            instances.forEach(element => {
+            instances.forEach((element,i) => {
                 element.position.z += 0.01 * x.deltaTime
-                if (element.position.z > 10)
+                if (element.position.z > 10) {
                     element.dispose()
+                    instances.splice(i, 1);
+                }
             });
 
-            ticker += x.deltaTime            
+            ticker += x.deltaTime
         })
     }
 
@@ -188,7 +226,7 @@ export class GameScene extends BABYLON.Scene {
 
         var light = new BABYLON.HemisphericLight("point", new BABYLON.Vector3(0.1, 0.4, -1), this);
 
-        this._createSkybox()
+        this._createEnvironment()
         await this._createShip()
         await this._createEnemySpawner()
 
