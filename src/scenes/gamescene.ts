@@ -14,9 +14,13 @@ function _getRandomArbitrary(min, max): number {
 export class GameScene extends BABYLON.Scene {
     _view: HTMLCanvasElement
 
+    // Меш игрока
     _ship: BABYLON.AbstractMesh
 
+    // Вектор для перемещения игрока
     _inputVector: BABYLON.Vector3
+
+    _isFire: boolean
 
     // Создаёт окружение
     _createEnvironment() {
@@ -45,7 +49,7 @@ export class GameScene extends BABYLON.Scene {
                 return;
 
             if (time > 100) {
-                let nline = line.clone("nline")
+                let nline = line.createInstance("nline")
                 nline.position.x = _getRandomArbitrary(-15, 15)
                 nline.position.y = _getRandomArbitrary(-15, 15)
                 instances.push(nline)
@@ -57,7 +61,7 @@ export class GameScene extends BABYLON.Scene {
                 element.position.z += 0.2 * x.deltaTime
                 if (element.position.z > 10) {
                     element.dispose()
-                    instances.splice(i, 1);                    
+                    instances.splice(i, 1);
                 }
             });
 
@@ -104,9 +108,26 @@ export class GameScene extends BABYLON.Scene {
 
         this._ship = result.meshes[0]
 
-        // Обрабатывает движение корабля
+        // Загружает выстрел
+        result = await BABYLON.SceneLoader.ImportMeshAsync(
+            "",
+            "./models/",
+            "particle.glb",
+            this
+        )
+
+        let particle = result.meshes[0] as BABYLON.InstancedMesh
+        particle.rotate(BABYLON.Axis.Y, BABYLON.Angle.FromDegrees(90).radians())
+        particle.position.z = 0
+        particle.setEnabled(false)
+
+        // Обрабатывает движение корабля и стрельбу
         let angleZ = 0
         let angleX = 0
+        let fireTime = 0
+
+        let particles = []
+
         this.onBeforeRenderObservable.add(x => {
             if (x.deltaTime == undefined)
                 return;
@@ -117,11 +138,29 @@ export class GameScene extends BABYLON.Scene {
             angleZ = BABYLON.Scalar.Lerp(angleZ, 10 * (this._inputVector.x) * 0.0174533, 0.1)
             angleX = BABYLON.Scalar.Lerp(angleX, 10 * (this._inputVector.y) * 0.0174533, 0.1)
             this._ship.rotation = this._ship.rotation.set(angleX, 180 * 0.0174533, angleZ)
+
+            if (this._isFire && fireTime <= 0) {
+                fireTime = 600
+                particle.setEnabled(true)
+                let instance = particle.clone("part")
+                instance.position = this._ship.position.clone()
+                particles.push(instance)
+                particle.setEnabled(false)
+            }
+
+            particles.forEach((element, i) => {
+                element.position.z -= 0.05 * x.deltaTime
+                if (element.position.z < -100) {
+                    element.dispose()
+                    particles.splice(i, 1);
+                }
+            });
+
+            fireTime -= x.deltaTime
         })
 
         // Обрабатывает ввод от игрока
         this.onKeyboardObservable.add(x => {
-
             switch (x.type) {
                 case BABYLON.KeyboardEventTypes.KEYDOWN:
                     switch (x.event.code) {
@@ -137,6 +176,9 @@ export class GameScene extends BABYLON.Scene {
                         case "KeyD":
                             this._inputVector.x = -1
                             break;
+                        case "Space":
+                            this._isFire = true
+                            break;
                     }
 
                     break;
@@ -149,6 +191,12 @@ export class GameScene extends BABYLON.Scene {
                         case "KeyA":
                         case "KeyD":
                             this._inputVector.x = 0
+                            break;
+                        case "Space":
+                            this._isFire = false
+                            break;
+                        default:
+                            //console.log(x.event.code)
                             break;
                     }
 
@@ -201,7 +249,7 @@ export class GameScene extends BABYLON.Scene {
             }
 
 
-            instances.forEach((element,i) => {
+            instances.forEach((element, i) => {
                 element.position.z += 0.01 * x.deltaTime
                 if (element.position.z > 10) {
                     element.dispose()
