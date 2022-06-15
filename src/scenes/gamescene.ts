@@ -20,6 +20,8 @@ export class GameScene extends BABYLON.Scene {
     // Вектор для перемещения игрока
     _inputVector: BABYLON.Vector3
 
+    _enemies = new Array<BABYLON.AbstractMesh>()
+
     _isFire: boolean
 
     // Создаёт окружение
@@ -38,35 +40,35 @@ export class GameScene extends BABYLON.Scene {
             new BABYLON.Vector3(0, 0, 5),
         ]
 
-        let line = BABYLON.MeshBuilder.CreateLines("lines", { points: myPoints });
-        line.position.z = -200
+        // let line = BABYLON.MeshBuilder.CreateLines("lines", { points: myPoints });
+        // line.position.z = -200
 
-        let time = 0
-        let instances = []
+        // let time = 0
+        // let instances = []
 
-        this.onBeforeRenderObservable.add(x => {
-            if (x.deltaTime == undefined)
-                return;
+        // this.onBeforeRenderObservable.add(x => {
+        //     if (x.deltaTime == undefined)
+        //         return;
 
-            if (time > 100) {
-                let nline = line.createInstance("nline")
-                nline.position.x = _getRandomArbitrary(-15, 15)
-                nline.position.y = _getRandomArbitrary(-15, 15)
-                instances.push(nline)
+        //     if (time > 100) {
+        //         let nline = line.createInstance("nline")
+        //         nline.position.x = _getRandomArbitrary(-15, 15)
+        //         nline.position.y = _getRandomArbitrary(-15, 15)
+        //         instances.push(nline)
 
-                time = 0
-            }
+        //         time = 0
+        //     }
 
-            instances.forEach((element, i) => {
-                element.position.z += 0.2 * x.deltaTime
-                if (element.position.z > 10) {
-                    element.dispose()
-                    instances.splice(i, 1);
-                }
-            });
+        //     instances.forEach((element, i) => {
+        //         element.position.z += 0.2 * x.deltaTime
+        //         if (element.position.z > 10) {
+        //             element.dispose()
+        //             instances.splice(i, 1);
+        //         }
+        //     });
 
-            time += x.deltaTime
-        })
+        //     time += x.deltaTime
+        // })
     }
 
     // Создаёт корабль
@@ -105,8 +107,12 @@ export class GameScene extends BABYLON.Scene {
             pos.z = 2
             particleSystem.emitter = pos;
         })
+                
+        this._ship = result.meshes[0].getChildren()[0] as BABYLON.InstancedMesh
+        this._ship.setParent(null)
+        this._ship.checkCollisions = true
 
-        this._ship = result.meshes[0]
+        //shipMesh.dispose()
 
         // Загружает выстрел
         result = await BABYLON.SceneLoader.ImportMeshAsync(
@@ -116,7 +122,7 @@ export class GameScene extends BABYLON.Scene {
             this
         )
 
-        let particle = result.meshes[0] as BABYLON.InstancedMesh
+        let particle = result.meshes[0].getChildren()[0] as BABYLON.InstancedMesh
         particle.rotate(BABYLON.Axis.Y, BABYLON.Angle.FromDegrees(90).radians())
         particle.position.z = 0
         particle.setEnabled(false)
@@ -126,7 +132,8 @@ export class GameScene extends BABYLON.Scene {
         let angleX = 0
         let fireTime = 0
 
-        let particles = []
+        let particles = new Array<BABYLON.AbstractMesh>()
+        let enemies = this._enemies
 
         this.onBeforeRenderObservable.add(x => {
             if (x.deltaTime == undefined)
@@ -135,14 +142,15 @@ export class GameScene extends BABYLON.Scene {
             this._ship.position.x += this._inputVector.x * x.deltaTime * 0.005;
             this._ship.position.y += this._inputVector.y * x.deltaTime * 0.005;
 
-            angleZ = BABYLON.Scalar.Lerp(angleZ, 10 * (this._inputVector.x) * 0.0174533, 0.1)
-            angleX = BABYLON.Scalar.Lerp(angleX, 10 * (this._inputVector.y) * 0.0174533, 0.1)
-            this._ship.rotation = this._ship.rotation.set(angleX, 180 * 0.0174533, angleZ)
+            angleZ = BABYLON.Scalar.Lerp(angleZ, -10 * (this._inputVector.x) * 0.0174533, 0.1)
+            angleX = BABYLON.Scalar.Lerp(angleX, -10 * (this._inputVector.y) * 0.0174533, 0.1)
+            this._ship.rotation = this._ship.rotation.set(angleX, 0, 180 * 0.0174533 + angleZ)
 
             if (this._isFire && fireTime <= 0) {
                 fireTime = 600
                 particle.setEnabled(true)
-                let instance = particle.clone("part")
+                let instance = particle.createInstance("part")
+                instance.checkCollisions = true
                 instance.position = this._ship.position.clone()
                 particles.push(instance)
                 particle.setEnabled(false)
@@ -150,6 +158,16 @@ export class GameScene extends BABYLON.Scene {
 
             particles.forEach((element, i) => {
                 element.position.z -= 0.05 * x.deltaTime
+
+                enemies.forEach((en, ei) => {
+                    if (element.intersectsMesh(en)) {
+                        en.dispose()
+                        element.dispose()
+                        particles.splice(i, 1)
+                        enemies.splice(ei, 1)
+                    }
+                })
+
                 if (element.position.z < -100) {
                     element.dispose()
                     particles.splice(i, 1);
@@ -214,47 +232,54 @@ export class GameScene extends BABYLON.Scene {
             this,
         )
 
-        let enemy = result.meshes[0] as BABYLON.InstancedMesh
+        let enemy = result.meshes[0].getChildren()[0] as BABYLON.InstancedMesh
+        enemy.setParent(null)
         enemy.rotate(BABYLON.Axis.Y, BABYLON.Angle.FromDegrees(180).radians())
-        enemy.position.z = -100
+        enemy.position.z = -100        
+        enemy.checkCollisions = true
         enemy.setEnabled(false)
 
-        let instances = []
+        let enemies = this._enemies
 
         function addEnemyInstance() {
             enemy.setEnabled(true)
-            let instance = enemy.clone("inst")
+            let instance = enemy.createInstance("inst")
             instance.position.x = _getRandomArbitrary(-5, 5)
             instance.position.y = _getRandomArbitrary(-5, 5)
-            enemy.position.z += _getRandomArbitrary(-50, 10)
-            instances.push(instance)
+            instance.position.z += instance.position.z + _getRandomArbitrary(0, 40)
+            enemies.push(instance)
             enemy.setEnabled(false)
         }
 
-
-        enemy.setEnabled(true)
         for (var i = 0; i < 5; i++) {
             addEnemyInstance()
         }
 
         let ticker = 0
+        let ship = this._ship
 
         this.onBeforeRenderObservable.add(x => {
             if (x.deltaTime == undefined)
                 return;
 
-            if (ticker > 1500) {
+            if (ticker > 2500) {
                 addEnemyInstance()
                 ticker = 0
             }
 
 
-            instances.forEach((element, i) => {
+            enemies.forEach((element, i) => {
                 element.position.z += 0.01 * x.deltaTime
                 if (element.position.z > 10) {
                     element.dispose()
-                    instances.splice(i, 1);
+                    enemies.splice(i, 1);
                 }
+
+                // if (ship.intersectsMesh(element)) {
+                //     ship.dispose()
+                //     element.dispose()
+                //     enemies.splice(i, 1);
+                // }
             });
 
             ticker += x.deltaTime
@@ -269,6 +294,8 @@ export class GameScene extends BABYLON.Scene {
     }
 
     async enter(): Promise<void> {
+        this.collisionsEnabled = true
+
         const camera = new BABYLON.ArcRotateCamera("camera", -Math.PI / 2, Math.PI / 2.5, 3, new BABYLON.Vector3(0, 0, 2.5), this);
         camera.position = new BABYLON.Vector3(0, 3, 20)
 
@@ -278,8 +305,8 @@ export class GameScene extends BABYLON.Scene {
         await this._createShip()
         await this._createEnemySpawner()
 
-        // this.debugLayer.show({
-        //     embedMode: true
-        // });
+        this.debugLayer.show({
+            embedMode: true
+        });
     }
 }
