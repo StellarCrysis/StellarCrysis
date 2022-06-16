@@ -107,12 +107,9 @@ export class GameScene extends BABYLON.Scene {
             pos.z = 2
             particleSystem.emitter = pos;
         })
-                
-        this._ship = result.meshes[0].getChildren()[0] as BABYLON.InstancedMesh
-        this._ship.setParent(null)
-        this._ship.checkCollisions = true
 
-        //shipMesh.dispose()
+        this._ship = result.meshes[0].getChildMeshes()[0] as BABYLON.InstancedMesh
+        this._ship.setParent(null)        
 
         // Загружает выстрел
         result = await BABYLON.SceneLoader.ImportMeshAsync(
@@ -149,8 +146,7 @@ export class GameScene extends BABYLON.Scene {
             if (this._isFire && fireTime <= 0) {
                 fireTime = 600
                 particle.setEnabled(true)
-                let instance = particle.createInstance("part")
-                instance.checkCollisions = true
+                let instance = particle.createInstance("part")                
                 instance.position = this._ship.position.clone()
                 particles.push(instance)
                 particle.setEnabled(false)
@@ -232,23 +228,25 @@ export class GameScene extends BABYLON.Scene {
             this,
         )
 
-        let enemy = result.meshes[0].getChildren()[0] as BABYLON.InstancedMesh
+        let enemy = result.meshes[0].getChildMeshes()[0] as BABYLON.InstancedMesh
         enemy.setParent(null)
         enemy.rotate(BABYLON.Axis.Y, BABYLON.Angle.FromDegrees(180).radians())
-        enemy.position.z = -100        
-        enemy.checkCollisions = true
+        enemy.position.z = -150
         enemy.setEnabled(false)
 
         let enemies = this._enemies
 
+        let wasInstanced = false
+
         function addEnemyInstance() {
             enemy.setEnabled(true)
-            let instance = enemy.createInstance("inst")
+            let instance = enemy.createInstance("inst")            
             instance.position.x = _getRandomArbitrary(-5, 5)
             instance.position.y = _getRandomArbitrary(-5, 5)
-            instance.position.z += instance.position.z + _getRandomArbitrary(0, 40)
+            instance.position.z = enemy.position.z + _getRandomArbitrary(0, 40)
             enemies.push(instance)
             enemy.setEnabled(false)
+            wasInstanced = true
         }
 
         for (var i = 0; i < 5; i++) {
@@ -262,25 +260,29 @@ export class GameScene extends BABYLON.Scene {
             if (x.deltaTime == undefined)
                 return;
 
+            // После инстансинга нельзя проверять intersectsMesh, будут неправильно проверятся коллизии
+            if (!wasInstanced) {
+                enemies.forEach((element, i) => {
+                    if (ship.intersectsMesh(element, true)) {                        
+                        ship.dispose()
+                        element.dispose()
+                        enemies.splice(i, 1);
+                    }
+
+                    element.position.z += 0.01 * x.deltaTime
+                    if (element.position.z > 10) {
+                        element.dispose()
+                        enemies.splice(i, 1);
+                    }
+                });
+            } else {
+                wasInstanced = false
+            }
+
             if (ticker > 2500) {
                 addEnemyInstance()
                 ticker = 0
             }
-
-
-            enemies.forEach((element, i) => {
-                element.position.z += 0.01 * x.deltaTime
-                if (element.position.z > 10) {
-                    element.dispose()
-                    enemies.splice(i, 1);
-                }
-
-                // if (ship.intersectsMesh(element)) {
-                //     ship.dispose()
-                //     element.dispose()
-                //     enemies.splice(i, 1);
-                // }
-            });
 
             ticker += x.deltaTime
         })
@@ -294,8 +296,6 @@ export class GameScene extends BABYLON.Scene {
     }
 
     async enter(): Promise<void> {
-        this.collisionsEnabled = true
-
         const camera = new BABYLON.ArcRotateCamera("camera", -Math.PI / 2, Math.PI / 2.5, 3, new BABYLON.Vector3(0, 0, 2.5), this);
         camera.position = new BABYLON.Vector3(0, 3, 20)
 
