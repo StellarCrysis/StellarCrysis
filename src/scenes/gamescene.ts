@@ -22,7 +22,30 @@ export class GameScene extends BABYLON.Scene {
 
     _enemies = new Array<BABYLON.AbstractMesh>()
 
+    // Признак что игрок нажал на стрельбу
     _isFire: boolean
+
+    // Добавляет взрыв в определённое место
+    _addExplosion(place: BABYLON.Vector3) {
+        let particleSystem = new BABYLON.ParticleSystem("particles", 200, this)
+        particleSystem.particleTexture = new BABYLON.Texture("textures/flare.png")
+        particleSystem.createSphereEmitter(0.1, 0)
+        particleSystem.manualEmitCount = 2000
+        particleSystem.blendMode = BABYLON.ParticleSystem.BLENDMODE_ONEONE;
+        particleSystem.minEmitPower = 1;
+        particleSystem.maxEmitPower = 10;
+        particleSystem.minLifeTime = 0.5;
+        particleSystem.maxLifeTime = 0.9;
+        particleSystem.updateSpeed = 0.03        
+        particleSystem.color1 = BABYLON.Color4.FromHexString("#FFAF02")        
+        particleSystem.emitter = place.clone()
+        particleSystem.start();
+
+        setTimeout(() => {
+            particleSystem.dispose()
+        }, 2000)
+    }
+
 
     // Создаёт окружение
     _createEnvironment() {
@@ -40,35 +63,35 @@ export class GameScene extends BABYLON.Scene {
             new BABYLON.Vector3(0, 0, 5),
         ]
 
-        // let line = BABYLON.MeshBuilder.CreateLines("lines", { points: myPoints });
-        // line.position.z = -200
+        let line = BABYLON.MeshBuilder.CreateLines("lines", { points: myPoints });
+        line.position.z = -200
 
-        // let time = 0
-        // let instances = []
+        let time = 0
+        let instances = []
 
-        // this.onBeforeRenderObservable.add(x => {
-        //     if (x.deltaTime == undefined)
-        //         return;
+        this.onBeforeRenderObservable.add(x => {
+            if (x.deltaTime == undefined)
+                return;
 
-        //     if (time > 100) {
-        //         let nline = line.createInstance("nline")
-        //         nline.position.x = _getRandomArbitrary(-15, 15)
-        //         nline.position.y = _getRandomArbitrary(-15, 15)
-        //         instances.push(nline)
+            if (time > 100) {
+                let nline = line.createInstance("nline")
+                nline.position.x = _getRandomArbitrary(-15, 15)
+                nline.position.y = _getRandomArbitrary(-15, 15)
+                instances.push(nline)
 
-        //         time = 0
-        //     }
+                time = 0
+            }
 
-        //     instances.forEach((element, i) => {
-        //         element.position.z += 0.2 * x.deltaTime
-        //         if (element.position.z > 10) {
-        //             element.dispose()
-        //             instances.splice(i, 1);
-        //         }
-        //     });
+            instances.forEach((element, i) => {
+                element.position.z += 0.2 * x.deltaTime
+                if (element.position.z > 10) {
+                    element.dispose()
+                    instances.splice(i, 1);
+                }
+            });
 
-        //     time += x.deltaTime
-        // })
+            time += x.deltaTime
+        })
     }
 
     // Создаёт корабль
@@ -109,7 +132,7 @@ export class GameScene extends BABYLON.Scene {
         })
 
         this._ship = result.meshes[0].getChildMeshes()[0] as BABYLON.InstancedMesh
-        this._ship.setParent(null)        
+        this._ship.setParent(null)
 
         // Загружает выстрел
         result = await BABYLON.SceneLoader.ImportMeshAsync(
@@ -132,21 +155,23 @@ export class GameScene extends BABYLON.Scene {
         let particles = new Array<BABYLON.AbstractMesh>()
         let enemies = this._enemies
 
+        let scene = this
+
         this.onBeforeRenderObservable.add(x => {
             if (x.deltaTime == undefined)
                 return;
 
-            this._ship.position.x += this._inputVector.x * x.deltaTime * 0.005;
-            this._ship.position.y += this._inputVector.y * x.deltaTime * 0.005;
+            scene._ship.position.x += scene._inputVector.x * x.deltaTime * 0.005;
+            scene._ship.position.y += scene._inputVector.y * x.deltaTime * 0.005;
 
-            angleZ = BABYLON.Scalar.Lerp(angleZ, -10 * (this._inputVector.x) * 0.0174533, 0.1)
-            angleX = BABYLON.Scalar.Lerp(angleX, -10 * (this._inputVector.y) * 0.0174533, 0.1)
-            this._ship.rotation = this._ship.rotation.set(angleX, 0, 180 * 0.0174533 + angleZ)
+            angleZ = BABYLON.Scalar.Lerp(angleZ, -10 * (scene._inputVector.x) * 0.0174533, 0.1)
+            angleX = BABYLON.Scalar.Lerp(angleX, -10 * (scene._inputVector.y) * 0.0174533, 0.1)
+            scene._ship.rotation = this._ship.rotation.set(angleX, 0, 180 * 0.0174533 + angleZ)
 
             if (this._isFire && fireTime <= 0) {
                 fireTime = 600
                 particle.setEnabled(true)
-                let instance = particle.createInstance("part")                
+                let instance = particle.createInstance("part")
                 instance.position = this._ship.position.clone()
                 particles.push(instance)
                 particle.setEnabled(false)
@@ -157,6 +182,7 @@ export class GameScene extends BABYLON.Scene {
 
                 enemies.forEach((en, ei) => {
                     if (element.intersectsMesh(en)) {
+                        scene._addExplosion(en.position)
                         en.dispose()
                         element.dispose()
                         particles.splice(i, 1)
@@ -240,7 +266,7 @@ export class GameScene extends BABYLON.Scene {
 
         function addEnemyInstance() {
             enemy.setEnabled(true)
-            let instance = enemy.createInstance("inst")            
+            let instance = enemy.createInstance("inst")
             instance.position.x = _getRandomArbitrary(-5, 5)
             instance.position.y = _getRandomArbitrary(-5, 5)
             instance.position.z = enemy.position.z + _getRandomArbitrary(0, 40)
@@ -263,7 +289,7 @@ export class GameScene extends BABYLON.Scene {
             // После инстансинга нельзя проверять intersectsMesh, будут неправильно проверятся коллизии
             if (!wasInstanced) {
                 enemies.forEach((element, i) => {
-                    if (ship.intersectsMesh(element, true)) {                        
+                    if (ship.intersectsMesh(element, true)) {
                         ship.dispose()
                         element.dispose()
                         enemies.splice(i, 1);
@@ -308,5 +334,7 @@ export class GameScene extends BABYLON.Scene {
         this.debugLayer.show({
             embedMode: true
         });
+
+        //       this._addExplosion(new BABYLON.Vector3(0,0,-10))
     }
 }
