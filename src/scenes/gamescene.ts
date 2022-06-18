@@ -36,8 +36,8 @@ export class GameScene extends BABYLON.Scene {
         particleSystem.maxEmitPower = 10;
         particleSystem.minLifeTime = 0.5;
         particleSystem.maxLifeTime = 0.9;
-        particleSystem.updateSpeed = 0.03        
-        particleSystem.color1 = BABYLON.Color4.FromHexString("#FFAF02")        
+        particleSystem.updateSpeed = 0.03
+        particleSystem.color1 = BABYLON.Color4.FromHexString("#FFAF02")
         particleSystem.emitter = place.clone()
         particleSystem.start();
 
@@ -134,7 +134,23 @@ export class GameScene extends BABYLON.Scene {
         this._ship = result.meshes[0].getChildMeshes()[0] as BABYLON.InstancedMesh
         this._ship.setParent(null)
 
-        // Загружает выстрел
+        // Добавляет прицел
+        const spriteManager = new BABYLON.SpriteManager("aimManager", "textures/aim.png", 10, { width: 154, height: 150 }, this)
+        let aimSprite = new BABYLON.Sprite("tree", spriteManager)
+        aimSprite.width = 1
+        aimSprite.height = 1
+        aimSprite.position = new BABYLON.Vector3(0, 0, -10)
+
+        this.onBeforeRenderObservable.add(x => {
+            if (x.deltaTime == undefined)
+                return;
+
+            let pos = this._ship.position.clone()
+            pos.z = -15
+            aimSprite.position = pos;
+        })
+
+        // Загружает снаряд
         result = await BABYLON.SceneLoader.ImportMeshAsync(
             "",
             "./models/",
@@ -142,6 +158,7 @@ export class GameScene extends BABYLON.Scene {
             this
         )
 
+        // Снаряд
         let particle = result.meshes[0].getChildren()[0] as BABYLON.InstancedMesh
         particle.rotate(BABYLON.Axis.Y, BABYLON.Angle.FromDegrees(90).radians())
         particle.position.z = 0
