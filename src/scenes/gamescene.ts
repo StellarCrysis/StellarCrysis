@@ -4,6 +4,9 @@ import "@babylonjs/loaders";
 
 import * as GUI from "@babylonjs/gui"
 import * as BABYLON from "@babylonjs/core"
+import { PlayerEntity } from "../entities/player";
+import { Bullet } from "../entities/bullet";
+import { Enemy } from "../entities/enemy";
 
 // Возвращает случайное число между min и max
 function _getRandomArbitrary(min, max): number {
@@ -14,13 +17,11 @@ function _getRandomArbitrary(min, max): number {
 export class GameScene extends BABYLON.Scene {
     _view: HTMLCanvasElement
 
-    // Меш игрока
-    _ship: BABYLON.AbstractMesh
+    // Игрок
+    _player: PlayerEntity
 
-    // Вектор для перемещения игрока
-    _inputVector: BABYLON.Vector3
-
-    _enemies = new Array<BABYLON.AbstractMesh>()
+    // Враги
+    _enemies = new Array<Enemy>()
 
     // Признак что игрок нажал на стрельбу
     _isFire: boolean
@@ -95,200 +96,67 @@ export class GameScene extends BABYLON.Scene {
     }
 
     // Создаёт корабль
-    async _createShip() {
-        let result = await BABYLON.SceneLoader.ImportMeshAsync(
-            "",
-            "./models/",
-            "ship.glb",
-            this
-        )
+    async _createPlayer() {
+        this._player = new PlayerEntity(this)
+        await this._player.init()
 
-        // Создаёт выхлоп из движка корабля
-        const particleSystem = new BABYLON.ParticleSystem("particles", 2000, this)
-        particleSystem.particleTexture = new BABYLON.Texture("textures/flare.png")
-        particleSystem.emitter = new BABYLON.Vector3(0, 0, 2)
-        particleSystem.start();
-
-        particleSystem.minSize = 0.5
-        particleSystem.maxSize = 1
-
-        particleSystem.direction1 = new BABYLON.Vector3(0, 1, 10)
-        particleSystem.direction2 = new BABYLON.Vector3(0, -1, 10)
-
-        particleSystem.minLifeTime = 0.01
-        particleSystem.maxLifeTime = 0.3
-
-        particleSystem.emitRate = 500;
-        particleSystem.minEmitBox = new BABYLON.Vector3(-0.2, -0.2, 0)
-        particleSystem.maxEmitBox = new BABYLON.Vector3(0.2, 0.2, 0)
-
-        this.onBeforeRenderObservable.add(x => {
-            if (x.deltaTime == undefined)
-                return;
-
-            let pos = this._ship.position.clone()
-            pos.z = 2
-            particleSystem.emitter = pos;
-        })
-
-        this._ship = result.meshes[0].getChildMeshes()[0] as BABYLON.InstancedMesh
-        this._ship.setParent(null)
-
-        // Добавляет прицел
-        const spriteManager = new BABYLON.SpriteManager("aimManager", "textures/aim.png", 10, { width: 154, height: 150 }, this)
-        let aimSprite = new BABYLON.Sprite("tree", spriteManager)
-        aimSprite.width = 1
-        aimSprite.height = 1
-        aimSprite.position = new BABYLON.Vector3(0, 0, -10)
-
-        this.onBeforeRenderObservable.add(x => {
-            if (x.deltaTime == undefined)
-                return;
-
-            let pos = this._ship.position.clone()
-            pos.z = -15
-            aimSprite.position = pos;
-        })
-
-        // Загружает снаряд
-        result = await BABYLON.SceneLoader.ImportMeshAsync(
-            "",
-            "./models/",
-            "particle.glb",
-            this
-        )
-
-        // Снаряд
-        let particle = result.meshes[0].getChildren()[0] as BABYLON.InstancedMesh
-        particle.rotate(BABYLON.Axis.Y, BABYLON.Angle.FromDegrees(90).radians())
-        particle.position.z = 0
-        particle.setEnabled(false)
-
-        // Обрабатывает движение корабля и стрельбу
-        let angleZ = 0
-        let angleX = 0
-        let fireTime = 0
-
-        let particles = new Array<BABYLON.AbstractMesh>()
+        let bullets = new Array<Bullet>()
         let enemies = this._enemies
-
         let scene = this
 
+        // Обрабатывает выстрел
+        this._player.fireObservable.add(async x => {
+            let bullet = new Bullet(this)
+            await bullet.init()
+            bullet.position = this._player.position.clone()
+            bullets.push(bullet)
+        })
+
         this.onBeforeRenderObservable.add(x => {
             if (x.deltaTime == undefined)
                 return;
 
-            scene._ship.position.x += scene._inputVector.x * x.deltaTime * 0.005;
-            scene._ship.position.y += scene._inputVector.y * x.deltaTime * 0.005;
+            for (let i = 0; i < bullets.length; i++) {
+                let bullet = bullets[i]
+                bullet.position.z -= 0.05 * x.deltaTime
 
-            angleZ = BABYLON.Scalar.Lerp(angleZ, -10 * (scene._inputVector.x) * 0.0174533, 0.1)
-            angleX = BABYLON.Scalar.Lerp(angleX, -10 * (scene._inputVector.y) * 0.0174533, 0.1)
-            scene._ship.rotation = this._ship.rotation.set(angleX, 0, 180 * 0.0174533 + angleZ)
-
-            if (this._isFire && fireTime <= 0) {
-                fireTime = 600
-                particle.setEnabled(true)
-                let instance = particle.createInstance("part")
-                instance.position = this._ship.position.clone()
-                particles.push(instance)
-                particle.setEnabled(false)
-            }
-
-            particles.forEach((element, i) => {
-                element.position.z -= 0.05 * x.deltaTime
-
-                enemies.forEach((en, ei) => {
-                    if (element.intersectsMesh(en)) {
-                        scene._addExplosion(en.position)
-                        en.dispose()
-                        element.dispose()
-                        particles.splice(i, 1)
-                        enemies.splice(ei, 1)
+                for (let y = 0; y < enemies.length; y++) {
+                    let enemy = enemies[y]
+                    if (bullet.intersectsEntity(enemy)) {
+                        scene._addExplosion(enemy.position)
+                        enemy.dispose()
+                        bullet.dispose()
+                        bullets.splice(i, 1)
+                        enemies.splice(y, 1)
+                        i--
+                        y--
                     }
-                })
-
-                if (element.position.z < -100) {
-                    element.dispose()
-                    particles.splice(i, 1);
                 }
-            });
 
-            fireTime -= x.deltaTime
-        })
-
-        // Обрабатывает ввод от игрока
-        this.onKeyboardObservable.add(x => {
-            switch (x.type) {
-                case BABYLON.KeyboardEventTypes.KEYDOWN:
-                    switch (x.event.code) {
-                        case "KeyW":
-                            this._inputVector.y = 1
-                            break;
-                        case "KeyS":
-                            this._inputVector.y = -1
-                            break;
-                        case "KeyA":
-                            this._inputVector.x = 1
-                            break;
-                        case "KeyD":
-                            this._inputVector.x = -1
-                            break;
-                        case "Space":
-                            this._isFire = true
-                            break;
-                    }
-
-                    break;
-                case BABYLON.KeyboardEventTypes.KEYUP:
-                    switch (x.event.code) {
-                        case "KeyW":
-                        case "KeyS":
-                            this._inputVector.y = 0
-                            break;
-                        case "KeyA":
-                        case "KeyD":
-                            this._inputVector.x = 0
-                            break;
-                        case "Space":
-                            this._isFire = false
-                            break;
-                        default:
-                            //console.log(x.event.code)
-                            break;
-                    }
-
-                    break;
+                if (bullet.position.z < -100) {
+                    bullet.dispose()
+                    bullets.splice(i, 1);
+                    i--
+                }
             }
-        });
+        })
     }
 
     // Создаёт врагов
     async _createEnemySpawner() {
-        let result = await BABYLON.SceneLoader.ImportMeshAsync(
-            "",
-            "./models/",
-            "enemy.glb",
-            this,
-        )
-
-        let enemy = result.meshes[0].getChildMeshes()[0] as BABYLON.InstancedMesh
-        enemy.setParent(null)
-        enemy.rotate(BABYLON.Axis.Y, BABYLON.Angle.FromDegrees(180).radians())
-        enemy.position.z = -150
-        enemy.setEnabled(false)
-
         let enemies = this._enemies
 
         let wasInstanced = false
 
-        function addEnemyInstance() {
-            enemy.setEnabled(true)
-            let instance = enemy.createInstance("inst")
-            instance.position.x = _getRandomArbitrary(-5, 5)
-            instance.position.y = _getRandomArbitrary(-5, 5)
-            instance.position.z = enemy.position.z + _getRandomArbitrary(0, 40)
-            enemies.push(instance)
-            enemy.setEnabled(false)
+        let scene = this
+
+        async function addEnemyInstance() {
+            let enemy = new Enemy(scene)
+            await enemy.init()
+            enemy.position.x = _getRandomArbitrary(-5, 5)
+            enemy.position.y = _getRandomArbitrary(-5, 5)
+            enemy.position.z = -150 + _getRandomArbitrary(0, 40)
+            enemies.push(enemy)
             wasInstanced = true
         }
 
@@ -297,7 +165,7 @@ export class GameScene extends BABYLON.Scene {
         }
 
         let ticker = 0
-        let ship = this._ship
+        let player = this._player
 
         this.onBeforeRenderObservable.add(x => {
             if (x.deltaTime == undefined)
@@ -305,19 +173,24 @@ export class GameScene extends BABYLON.Scene {
 
             // После инстансинга нельзя проверять intersectsMesh, будут неправильно проверятся коллизии
             if (!wasInstanced) {
-                enemies.forEach((element, i) => {
-                    if (ship.intersectsMesh(element, true)) {
-                        ship.dispose()
-                        element.dispose()
+                for (let i = 0; i < enemies.length; i++) {
+                    let enemy = enemies[i]
+                    if (player.intersectsEntity(enemy)) {
+                        this._addExplosion(player.position.clone())
+                        player.dispose()
+                        enemy.dispose()
                         enemies.splice(i, 1);
                     }
 
-                    element.position.z += 0.01 * x.deltaTime
-                    if (element.position.z > 10) {
-                        element.dispose()
+                    enemy.position.z += 0.01 * x.deltaTime
+                    if (enemy.position.z > 10) {
+                        this._addExplosion(player.position.clone())
+                        player.dispose()
+                        enemy.dispose()
                         enemies.splice(i, 1);
+                        i--
                     }
-                });
+                }
             } else {
                 wasInstanced = false
             }
@@ -331,11 +204,11 @@ export class GameScene extends BABYLON.Scene {
         })
     }
 
+    // Конструктор
     constructor(engine, view) {
         super(engine)
 
         this._view = view
-        this._inputVector = new BABYLON.Vector3(0, 0, 0)
     }
 
     async enter(): Promise<void> {
@@ -345,13 +218,11 @@ export class GameScene extends BABYLON.Scene {
         var light = new BABYLON.HemisphericLight("point", new BABYLON.Vector3(0.1, 0.4, -1), this);
 
         this._createEnvironment()
-        await this._createShip()
+        await this._createPlayer()
         await this._createEnemySpawner()
 
-        this.debugLayer.show({
-            embedMode: true
-        });
-
-        //       this._addExplosion(new BABYLON.Vector3(0,0,-10))
+        // this.debugLayer.show({
+        //     embedMode: true
+        // })
     }
 }

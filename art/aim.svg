@@ -47,7 +47,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -60,16 +60,25 @@
        id="path817"
        cx="94.296021"
        cy="101.96265"
-       r="12.339689" />
+       r="12.339689"
+       inkscape:export-filename="/home/grabli66/Workspace/MVP/Simple3DScroller/public/textures/aim.png"
+       inkscape:export-xdpi="131"
+       inkscape:export-ydpi="131" />
     <path
        style="fill:none;stroke:#fc291a;stroke-width:2.17832446;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
        d="M 79.512682,101.78774 H 109.29917"
        id="path827"
-       inkscape:connector-curvature="0" />
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="/home/grabli66/Workspace/MVP/Simple3DScroller/public/textures/aim.png"
+       inkscape:export-xdpi="131"
+       inkscape:export-ydpi="131" />
     <path
        style="fill:none;stroke:#fc291a;stroke-width:2.16177416;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
        d="M 94.282841,87.263754 V 116.31173"
        id="path829"
-       inkscape:connector-curvature="0" />
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="/home/grabli66/Workspace/MVP/Simple3DScroller/public/textures/aim.png"
+       inkscape:export-xdpi="131"
+       inkscape:export-ydpi="131" />
   </g>
 </svg>
