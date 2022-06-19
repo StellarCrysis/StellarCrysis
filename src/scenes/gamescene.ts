@@ -26,6 +26,9 @@ export class GameScene extends BABYLON.Scene {
     // Признак что игрок нажал на стрельбу
     _isFire: boolean
 
+    // Уведомляет о попадании
+    _onEnemyHit = new BABYLON.Observable<boolean>()
+
     // Добавляет взрыв в определённое место
     _addExplosion(place: BABYLON.Vector3) {
         let particleSystem = new BABYLON.ParticleSystem("particles", 200, this)
@@ -95,6 +98,53 @@ export class GameScene extends BABYLON.Scene {
         })
     }
 
+    // Создаёт графический интерфейс
+    _createUi() {
+
+        function formatNumber(val: number): string {
+            let res = ["0", "0", "0", "0", "0", "0", "0",]
+            for (let i = res.length - 1; i > 0; i--) {
+                let frac = val % 10
+                res[i] = frac.toString()
+                val = Math.floor(val / 10)
+            }
+
+            return res.join("")
+        }
+
+        var uiTexture = GUI.AdvancedDynamicTexture.CreateFullscreenUI(
+            "UI"
+        );
+
+        let panel = new GUI.StackPanel("panel")
+        panel.isVertical = false
+        panel.width = "160px"
+        panel.height = "80px"
+        panel.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_TOP;
+        panel.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_RIGHT;
+
+        let img = new GUI.Image("aim", "textures/aim.png")
+        img.width = "28px"
+        img.height = "28px"
+
+        let score = 0
+
+        let label = new GUI.TextBlock("text", formatNumber(score))
+        label.width = "100px"
+        label.height = "28px"
+        label.paddingRight = "0px"
+        label.color = "#FFFFFF"
+
+        panel.addControl(img)
+        panel.addControl(label)
+        uiTexture.addControl(panel)
+
+        this._onEnemyHit.add((_) => {
+            score += 1
+            label.text = formatNumber(score)
+        })
+    }
+
     // Создаёт корабль
     async _createPlayer() {
         this._player = new PlayerEntity(this)
@@ -122,6 +172,7 @@ export class GameScene extends BABYLON.Scene {
 
                 for (let y = 0; y < enemies.length; y++) {
                     let enemy = enemies[y]
+                    // Обрабатывает попадание снаряда по врагу
                     if (bullet.intersectsEntity(enemy)) {
                         scene._addExplosion(enemy.position)
                         enemy.dispose()
@@ -130,6 +181,8 @@ export class GameScene extends BABYLON.Scene {
                         enemies.splice(y, 1)
                         i--
                         y--
+
+                        scene._onEnemyHit.notifyObservers(true)
                     }
                 }
 
@@ -220,6 +273,7 @@ export class GameScene extends BABYLON.Scene {
         this._createEnvironment()
         await this._createPlayer()
         await this._createEnemySpawner()
+        this._createUi()
 
         // this.debugLayer.show({
         //     embedMode: true

@@ -10,16 +10,13 @@ export class PlayerEntity extends Entity {
     _particleSystem: BABYLON.ParticleSystem
 
     // Менеджер спрайтов
-    _spriteManager:BABYLON.SpriteManager
+    _spriteManager: BABYLON.SpriteManager
 
     // Вектор для перемещения игрока
     _inputVector = new BABYLON.Vector3(0, 0, 0)
 
-    // Обозреватели которые обновляют логику
-    _updateObservers = new Array<BABYLON.Observer<BABYLON.Scene>>()
-
-    // Обозреватель клавиатуры
-    _keyboardObserver: BABYLON.Observer<BABYLON.KeyboardInfo> = null
+    // Обозреватели которые нужно освободить
+    _observers = []
 
     // Признак что нажата кнопка стрельбы
     _isFire: boolean
@@ -33,11 +30,11 @@ export class PlayerEntity extends Entity {
     }
 
     // Позиция сущности
-    get position() : BABYLON.Vector3 {
+    get position(): BABYLON.Vector3 {
         return this._mesh.position
     }
 
-    set position(v:BABYLON.Vector3) {
+    set position(v: BABYLON.Vector3) {
         this._mesh.position = v
     }
 
@@ -74,22 +71,20 @@ export class PlayerEntity extends Entity {
         this._particleSystem = particleSystem
 
         // Движение выхлопа
-        let upd = scene.onBeforeRenderObservable.add(x => {
+        this._observers.push(scene.onBeforeRenderObservable.add(x => {
             if (x.deltaTime == undefined)
                 return;
 
             let pos = this._mesh.position.clone()
             pos.z = 2
             particleSystem.emitter = pos;
-        })
-
-        this._updateObservers.push(upd)
+        }))
 
         this._mesh = result.meshes[0].getChildMeshes()[0] as BABYLON.InstancedMesh
         this._mesh.setParent(null)
 
         // Добавляет прицел
-        this._spriteManager = new BABYLON.SpriteManager("aimManager", "textures/aim.png", 10, { width: 154, height: 150 }, this._scene)        
+        this._spriteManager = new BABYLON.SpriteManager("aimManager", "textures/aim.png", 10, { width: 154, height: 150 }, this._scene)
         let aimSprite = new BABYLON.Sprite("tree", this._spriteManager)
         aimSprite.width = 1
         aimSprite.height = 1
@@ -108,11 +103,11 @@ export class PlayerEntity extends Entity {
         // Обрабатывает движение корабля и стрельбу
         let angleZ = 0
         let angleX = 0
-        let fireTime = 0        
+        let fireTime = 0
 
         let player = this
 
-        upd = scene.onBeforeRenderObservable.add(x => {
+        this._observers.push(scene.onBeforeRenderObservable.add(x => {
             if (x.deltaTime == undefined)
                 return;
 
@@ -126,15 +121,13 @@ export class PlayerEntity extends Entity {
             if (this._isFire && fireTime <= 0) {
                 fireTime = 600
                 this.fireObservable.notifyObservers(true)
-            }            
+            }
 
             fireTime -= x.deltaTime
-        })
-
-        this._updateObservers.push(upd)
+        }))
 
         // Обрабатывает ввод от игрока
-        let kupd = scene.onKeyboardObservable.add(x => {
+        this._observers.push(scene.onKeyboardObservable.add(x => {
             switch (x.type) {
                 case BABYLON.KeyboardEventTypes.KEYDOWN:
                     switch (x.event.code) {
@@ -175,9 +168,7 @@ export class PlayerEntity extends Entity {
 
                     break;
             }
-        });
-
-        this._keyboardObserver = kupd
+        }))
     }
 
     // Освобождает все ресурсы
@@ -186,15 +177,8 @@ export class PlayerEntity extends Entity {
         this._particleSystem.dispose()
         this._spriteManager.dispose()
 
-        this._updateObservers.forEach(x => {
-            this._scene.onBeforeRenderObservable.remove(x)
+        this._observers.forEach(x => {
+            x.unregisterOnNextCall = true
         })
-
-        this._updateObservers = null
-
-        if (this._keyboardObserver != null)
-            this._scene.onKeyboardObservable.remove(this._keyboardObserver)
-
-        this._scene.onKeyboardObservable = null
     }
 }
