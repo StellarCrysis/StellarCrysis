@@ -1,5 +1,5 @@
 import { Scene,Engine } from "@babylonjs/core"
-import { GameScene } from "./scenes/gamescene"
+//import { Game } from "./scenes/gamescene"
 
 // Входная точка
 class Index {
@@ -11,13 +11,15 @@ class Index {
         const view = document.getElementById("view") as HTMLCanvasElement
         this._engine = new Engine(view, true)
 
-        let gameScene = new GameScene(this._engine, view)
-        this._scene = gameScene
-        gameScene.enter().then(_ => {
-            this._engine.runRenderLoop(() => {
-                this._scene.render()
-            })
-        })        
+
+
+        // let gameScene = new GameScene(this._engine, view)
+        // this._scene = gameScene
+        // gameScene.enter().then(_ => {
+        //     this._engine.runRenderLoop(() => {
+        //         this._scene.render()
+        //     })
+        // })        
     }
 }
 

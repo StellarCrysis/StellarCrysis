@@ -7,6 +7,7 @@ import * as BABYLON from "@babylonjs/core"
 import { PlayerEntity } from "../entities/player";
 import { Bullet } from "../entities/bullet";
 import { Enemy } from "../entities/enemy";
+import { BaseScene } from "../common/basescene";
 
 // Возвращает случайное число между min и max
 function _getRandomArbitrary(min, max): number {
@@ -14,7 +15,7 @@ function _getRandomArbitrary(min, max): number {
 }
 
 // Основная игровая сцена
-export class GameScene extends BABYLON.Scene {
+export class GameScene extends BaseScene {    
     _view: HTMLCanvasElement
 
     // Игрок
@@ -30,9 +31,9 @@ export class GameScene extends BABYLON.Scene {
     _onEnemyHit = new BABYLON.Observable<boolean>()
 
     // Отображает Game Over
-    _showGameOver() {
+    _showGameOver() {        
         let uiTexture = GUI.AdvancedDynamicTexture.CreateFullscreenUI(
-            "UI"
+            "UI", true, this
         );
 
         let rect = new GUI.Rectangle("rect")        
@@ -152,7 +153,7 @@ export class GameScene extends BABYLON.Scene {
         }
 
         var uiTexture = GUI.AdvancedDynamicTexture.CreateFullscreenUI(
-            "UI"
+            "UI", true, this
         );
 
         let panel = new GUI.StackPanel("panel")
@@ -312,14 +313,18 @@ export class GameScene extends BABYLON.Scene {
         var light = new BABYLON.HemisphericLight("point", new BABYLON.Vector3(0.1, 0.4, -1), this);
 
         this._createEnvironment()
-        await this._createPlayer()
-        await this._createEnemySpawner()
-        this._createUi()
+        // await this._createPlayer()
+        // await this._createEnemySpawner()
+        // this._createUi()
 
         this._showGameOver()
 
         // this.debugLayer.show({
         //     embedMode: true
         // })
+    }
+
+    leave(): Promise<void> {
+        throw new Error("Method not implemented.");
     }
 }
