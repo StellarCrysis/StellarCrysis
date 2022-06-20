@@ -29,6 +29,46 @@ export class GameScene extends BABYLON.Scene {
     // Уведомляет о попадании
     _onEnemyHit = new BABYLON.Observable<boolean>()
 
+    // Отображает Game Over
+    _showGameOver() {
+        let uiTexture = GUI.AdvancedDynamicTexture.CreateFullscreenUI(
+            "UI"
+        );
+
+        let rect = new GUI.Rectangle("rect")        
+        rect.width = "400px"
+        rect.height = "300px"                 
+        rect.background = "#000000"
+
+        let panel = new GUI.StackPanel("panel")        
+        panel.paddingTop = "40px"
+        panel.width = "100%"
+        panel.height = "100%"
+        panel.isVertical = true        
+        
+        let label = new GUI.TextBlock("text", "Игра окончена")                        
+        label.color = "#FFFFFF"
+        label.fontSize = "40pt"
+        label.width = "100%"
+        label.height = "80px"        
+
+        let button = GUI.Button.CreateSimpleButton("button", "Начать заного")
+        button.paddingTop = "40px"
+        button.width = "200px"
+        button.height = "100px"        
+        button.color = "#FFFFFF"
+
+        panel.addControl(label)
+        panel.addControl(button)
+
+        rect.addControl(panel)        
+        uiTexture.addControl(rect)
+
+        button.onPointerClickObservable.add(x=> {
+            uiTexture.dispose()
+        })
+    }
+
     // Добавляет взрыв в определённое место
     _addExplosion(place: BABYLON.Vector3) {
         let particleSystem = new BABYLON.ParticleSystem("particles", 200, this)
@@ -100,7 +140,6 @@ export class GameScene extends BABYLON.Scene {
 
     // Создаёт графический интерфейс
     _createUi() {
-
         function formatNumber(val: number): string {
             let res = ["0", "0", "0", "0", "0", "0", "0",]
             for (let i = res.length - 1; i > 0; i--) {
@@ -233,6 +272,8 @@ export class GameScene extends BABYLON.Scene {
                         player.dispose()
                         enemy.dispose()
                         enemies.splice(i, 1);
+
+//                        scene._showGameOver()
                     }
 
                     enemy.position.z += 0.01 * x.deltaTime
@@ -274,6 +315,8 @@ export class GameScene extends BABYLON.Scene {
         await this._createPlayer()
         await this._createEnemySpawner()
         this._createUi()
+
+        this._showGameOver()
 
         // this.debugLayer.show({
         //     embedMode: true
