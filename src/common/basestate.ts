@@ -1,14 +1,9 @@
 import * as BABYLON from "@babylonjs/core"
 import { BaseScene } from "./basescene"
+import { Game } from "./game"
 
 // Базовое состояние игры
 export abstract class BaseState {
-    // Контекст движка
-    _engine: BABYLON.Engine
-
-    // Основной вид
-    _view: HTMLCanvasElement
-
     // Сцены
     _scenes = new Array<BaseScene>()
 
@@ -16,17 +11,14 @@ export abstract class BaseState {
     _renderLoop: () => void
 
     // Конструктор
-    constructor(engine: BABYLON.Engine, view: HTMLCanvasElement) {
-        this._engine = engine
-        this._view = view
-
+    constructor() {
         this._renderLoop = () => {
             this._scenes.forEach(x => {
                 x.render()
             })
         }
 
-        this._engine.runRenderLoop(this._renderLoop)
+        Game.instance.engine.runRenderLoop(this._renderLoop)
     }
 
     // Добавляет сцену
@@ -54,7 +46,7 @@ export abstract class BaseState {
             x.dispose()
         })
 
-        this._engine.stopRenderLoop(this._renderLoop)
+        Game.instance.engine.stopRenderLoop(this._renderLoop)
         this._scenes = null
     }
 }

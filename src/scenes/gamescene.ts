@@ -16,8 +16,6 @@ function _getRandomArbitrary(min, max): number {
 
 // Основная игровая сцена
 export class GameScene extends BaseScene {    
-    _view: HTMLCanvasElement
-
     // Игрок
     _player: PlayerEntity
 
@@ -36,36 +34,36 @@ export class GameScene extends BaseScene {
             "UI", true, this
         );
 
-        let rect = new GUI.Rectangle("rect")        
+        let rect = new GUI.Rectangle("rect")
         rect.width = "400px"
-        rect.height = "300px"                 
+        rect.height = "300px"
         rect.background = "#000000"
 
-        let panel = new GUI.StackPanel("panel")        
+        let panel = new GUI.StackPanel("panel")
         panel.paddingTop = "40px"
         panel.width = "100%"
         panel.height = "100%"
-        panel.isVertical = true        
-        
-        let label = new GUI.TextBlock("text", "Игра окончена")                        
+        panel.isVertical = true
+
+        let label = new GUI.TextBlock("text", "Игра окончена")
         label.color = "#FFFFFF"
         label.fontSize = "40pt"
         label.width = "100%"
-        label.height = "80px"        
+        label.height = "80px"
 
         let button = GUI.Button.CreateSimpleButton("button", "Начать заного")
         button.paddingTop = "40px"
         button.width = "200px"
-        button.height = "100px"        
+        button.height = "100px"
         button.color = "#FFFFFF"
 
         panel.addControl(label)
         panel.addControl(button)
 
-        rect.addControl(panel)        
+        rect.addControl(panel)
         uiTexture.addControl(rect)
 
-        button.onPointerClickObservable.add(x=> {
+        button.onPointerClickObservable.add(x => {
             uiTexture.dispose()
         })
     }
@@ -274,15 +272,17 @@ export class GameScene extends BaseScene {
                         enemy.dispose()
                         enemies.splice(i, 1);
 
-//                        scene._showGameOver()
+                        scene._showGameOver()
                     }
 
                     enemy.position.z += 0.01 * x.deltaTime
                     if (enemy.position.z > 10) {
                         this._addExplosion(player.position.clone())
+                        this._addExplosion(enemy.position.clone())
                         player.dispose()
                         enemy.dispose()
                         enemies.splice(i, 1);
+                        scene._showGameOver()
                         i--
                     }
                 }
@@ -300,10 +300,8 @@ export class GameScene extends BaseScene {
     }
 
     // Конструктор
-    constructor(engine, view) {
-        super(engine)
-
-        this._view = view
+    constructor() {
+        super()
     }
 
     async enter(): Promise<void> {
@@ -313,18 +311,14 @@ export class GameScene extends BaseScene {
         var light = new BABYLON.HemisphericLight("point", new BABYLON.Vector3(0.1, 0.4, -1), this);
 
         this._createEnvironment()
-        // await this._createPlayer()
-        // await this._createEnemySpawner()
-        // this._createUi()
+        await this._createPlayer()
+        await this._createEnemySpawner()
+        this._createUi()
 
-        this._showGameOver()
+        //this._showGameOver()
 
         // this.debugLayer.show({
         //     embedMode: true
         // })
-    }
-
-    leave(): Promise<void> {
-        throw new Error("Method not implemented.");
     }
 }
