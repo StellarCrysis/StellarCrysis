@@ -1,9 +1,13 @@
 import * as BABYLON from "@babylonjs/core"
+import { Disposer } from "./disposer"
 
 // Абстрактная сущность
 export abstract class Entity {
+    // Освобождает ресурсы
+    protected disposer = new Disposer()
+
     // Сцена
-    _scene: BABYLON.Scene
+    protected _scene: BABYLON.Scene
 
     // Мех который определяет границы сущности
     abstract get boundingMesh(): BABYLON.AbstractMesh
@@ -22,5 +26,7 @@ export abstract class Entity {
     }
 
     // Освобождает ресурсы
-    dispose() { }
+    dispose() {
+        this.disposer.disposeAll()
+    }
 }

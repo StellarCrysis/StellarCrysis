@@ -1,5 +1,5 @@
 import * as BABYLON from "@babylonjs/core"
-import { Entity } from "./entity";
+import { Entity } from "../common/entity";
 
 // Сущность врага
 export class Enemy extends Entity {
@@ -25,6 +25,11 @@ export class Enemy extends Entity {
 
     // Инициализирует
     override async init(): Promise<void> {
+        if (Enemy._instanceCreator != null && Enemy._instanceCreator._scene != this._scene) {
+            Enemy._instanceCreator.dispose()
+            Enemy._instanceCreator = null
+        }
+
         // Создаёт создателя снарядов
         if (Enemy._instanceCreator == null) {
             let result = await BABYLON.SceneLoader.ImportMeshAsync(
@@ -43,9 +48,6 @@ export class Enemy extends Entity {
         }
 
         this._mesh = Enemy._instanceCreator.createInstance("enemy")
-    }
-
-    override dispose(): void {
-        this._mesh.dispose()
+        this.disposer.addDisposableToDispose(this._mesh)        
     }
 }

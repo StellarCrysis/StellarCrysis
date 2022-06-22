@@ -1,9 +1,13 @@
 import * as BABYLON from "@babylonjs/core"
 import { BaseScene } from "./basescene"
+import { Disposer } from "./disposer"
 import { Game } from "./game"
 
 // Базовое состояние игры
 export abstract class BaseState {
+    // Освобождает ресурсы
+    protected disposer = new Disposer()
+
     // Сцены
     _scenes = new Array<BaseScene>()
 
@@ -47,6 +51,8 @@ export abstract class BaseState {
 
     // Освобождает ресурсы
     dispose() {
+        this.disposer.disposeAll()
+
         this._scenes.forEach(x => {
             x.dispose()
         })

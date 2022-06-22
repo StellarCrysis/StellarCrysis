@@ -23,6 +23,12 @@ export class GameState extends BaseState {
         await this._showLoadScene()
 
         let gameScene = new GameScene()
+        this.disposer.addObserverToDispose(gameScene.onRestartGameObservable.add(async _ => {
+            this.removeScene(gameScene)
+
+            await this.init();
+        }))
+
         await this.loadScene(gameScene)
 
         this._hideLoadScene()

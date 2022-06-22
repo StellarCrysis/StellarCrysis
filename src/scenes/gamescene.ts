@@ -15,7 +15,7 @@ function _getRandomArbitrary(min, max): number {
 }
 
 // Основная игровая сцена
-export class GameScene extends BaseScene {    
+export class GameScene extends BaseScene {
     // Игрок
     _player: PlayerEntity
 
@@ -26,10 +26,13 @@ export class GameScene extends BaseScene {
     _isFire: boolean
 
     // Уведомляет о попадании
-    _onEnemyHit = new BABYLON.Observable<boolean>()
+    _onEnemyHitObservable = new BABYLON.Observable<boolean>()
+
+    // Уведомляет о том что игрок выбрал продолжить игру
+    onRestartGameObservable = new BABYLON.Observable<boolean>()
 
     // Отображает Game Over
-    _showGameOver() {        
+    _showGameOver() {
         let uiTexture = GUI.AdvancedDynamicTexture.CreateFullscreenUI(
             "UI", true, this
         );
@@ -64,7 +67,7 @@ export class GameScene extends BaseScene {
         uiTexture.addControl(rect)
 
         button.onPointerClickObservable.add(x => {
-            uiTexture.dispose()
+            this.onRestartGameObservable.notifyObservers(true)
         })
     }
 
@@ -112,7 +115,7 @@ export class GameScene extends BaseScene {
         let time = 0
         let instances = []
 
-        this.onBeforeRenderObservable.add(x => {
+        this.disposer.addObserverToDispose(this.onBeforeRenderObservable.add(x => {
             if (x.deltaTime == undefined)
                 return;
 
@@ -134,7 +137,7 @@ export class GameScene extends BaseScene {
             });
 
             time += x.deltaTime
-        })
+        }))
     }
 
     // Создаёт графический интерфейс
@@ -177,10 +180,10 @@ export class GameScene extends BaseScene {
         panel.addControl(label)
         uiTexture.addControl(panel)
 
-        this._onEnemyHit.add((_) => {
+        this.disposer.addObserverToDispose(this._onEnemyHitObservable.add((_) => {
             score += 1
             label.text = formatNumber(score)
-        })
+        }))
     }
 
     // Создаёт корабль
@@ -193,14 +196,14 @@ export class GameScene extends BaseScene {
         let scene = this
 
         // Обрабатывает выстрел
-        this._player.fireObservable.add(async x => {
+        this.disposer.addObserverToDispose(this._player.fireObservable.add(async x => {
             let bullet = new Bullet(this)
             await bullet.init()
             bullet.position = this._player.position.clone()
             bullets.push(bullet)
-        })
+        }))
 
-        this.onBeforeRenderObservable.add(x => {
+        this.disposer.addObserverToDispose(this.onBeforeRenderObservable.add(x => {
             if (x.deltaTime == undefined)
                 return;
 
@@ -220,7 +223,7 @@ export class GameScene extends BaseScene {
                         i--
                         y--
 
-                        scene._onEnemyHit.notifyObservers(true)
+                        scene._onEnemyHitObservable.notifyObservers(true)
                     }
                 }
 
@@ -230,7 +233,7 @@ export class GameScene extends BaseScene {
                     i--
                 }
             }
-        })
+        }))
     }
 
     // Создаёт врагов
@@ -258,7 +261,7 @@ export class GameScene extends BaseScene {
         let ticker = 0
         let player = this._player
 
-        this.onBeforeRenderObservable.add(x => {
+        this.disposer.addObserverToDispose(this.onBeforeRenderObservable.add(x => {
             if (x.deltaTime == undefined)
                 return;
 
@@ -296,7 +299,7 @@ export class GameScene extends BaseScene {
             }
 
             ticker += x.deltaTime
-        })
+        }))
     }
 
     // Конструктор

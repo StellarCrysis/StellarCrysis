@@ -13,9 +13,6 @@ export class LoadScene extends BaseScene {
         )
 
         let label = new GUI.TextBlock("text", "Загружается...")
-        //label.width = "200px"
-        //label.height = "48px"
-        //label.paddingRight = "0px"
         label.fontSize = "40pt"
         label.color = "#FFFFFF"
 

@@ -1,5 +1,5 @@
 import * as BABYLON from "@babylonjs/core"
-import { Entity } from "./entity"
+import { Entity } from "../common/entity"
 
 // Игрок
 export class PlayerEntity extends Entity {
@@ -14,9 +14,6 @@ export class PlayerEntity extends Entity {
 
     // Вектор для перемещения игрока
     _inputVector = new BABYLON.Vector3(0, 0, 0)
-
-    // Обозреватели которые нужно освободить
-    _observers = []
 
     // Признак что нажата кнопка стрельбы
     _isFire: boolean
@@ -69,9 +66,10 @@ export class PlayerEntity extends Entity {
         particleSystem.maxEmitBox = new BABYLON.Vector3(0.2, 0.2, 0)
 
         this._particleSystem = particleSystem
+        this.disposer.addDisposableToDispose(this._particleSystem)
 
         // Движение выхлопа
-        this._observers.push(scene.onBeforeRenderObservable.add(x => {
+        this.disposer.addObserverToDispose(scene.onBeforeRenderObservable.add(x => {
             if (x.deltaTime == undefined)
                 return;
 
@@ -82,9 +80,12 @@ export class PlayerEntity extends Entity {
 
         this._mesh = result.meshes[0].getChildMeshes()[0] as BABYLON.InstancedMesh
         this._mesh.setParent(null)
+        this.disposer.addDisposableToDispose(this._mesh)
+
 
         // Добавляет прицел
         this._spriteManager = new BABYLON.SpriteManager("aimManager", "textures/aim.png", 10, { width: 154, height: 150 }, this._scene)
+        this.disposer.addDisposableToDispose(this._spriteManager)
         let aimSprite = new BABYLON.Sprite("tree", this._spriteManager)
         aimSprite.width = 1
         aimSprite.height = 1
@@ -107,7 +108,7 @@ export class PlayerEntity extends Entity {
 
         let player = this
 
-        this._observers.push(scene.onBeforeRenderObservable.add(x => {
+        this.disposer.addObserverToDispose(scene.onBeforeRenderObservable.add(x => {
             if (x.deltaTime == undefined)
                 return;
 
@@ -127,7 +128,7 @@ export class PlayerEntity extends Entity {
         }))
 
         // Обрабатывает ввод от игрока
-        this._observers.push(scene.onKeyboardObservable.add(x => {
+        this.disposer.addObserverToDispose(scene.onKeyboardObservable.add(x => {
             switch (x.type) {
                 case BABYLON.KeyboardEventTypes.KEYDOWN:
                     switch (x.event.code) {
@@ -169,16 +170,5 @@ export class PlayerEntity extends Entity {
                     break;
             }
         }))
-    }
-
-    // Освобождает все ресурсы
-    override dispose() {
-        this._mesh.dispose()
-        this._particleSystem.dispose()
-        this._spriteManager.dispose()
-
-        this._observers.forEach(x => {
-            x.unregisterOnNextCall = true
-        })
     }
 }
