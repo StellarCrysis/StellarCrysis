@@ -21,11 +21,16 @@ export abstract class BaseState {
         Game.instance.engine.runRenderLoop(this._renderLoop)
     }
 
+    // Загружает сцену и добавляет её
+    loadScene(scene: BaseScene): Promise<void> {
+        return scene.load().then(_ => {
+            this.addScene(scene)
+        })
+    }
+
     // Добавляет сцену
     addScene(scene: BaseScene) {
-        scene.enter().then(_ => {
-            this._scenes.push(scene)
-        })
+        this._scenes.push(scene)
     }
 
     // Удаляет сцену

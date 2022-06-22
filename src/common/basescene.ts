@@ -8,6 +8,6 @@ export abstract class BaseScene extends BABYLON.Scene {
         super(Game.instance.engine)
     }
 
-    // Заходит в сцену
-    abstract enter(): Promise<void>
+    // Загружает сцену
+    abstract load(): Promise<void>
 }

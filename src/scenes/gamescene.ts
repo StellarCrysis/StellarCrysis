@@ -304,7 +304,8 @@ export class GameScene extends BaseScene {
         super()
     }
 
-    async enter(): Promise<void> {
+    // Загружает сцену
+    async load(): Promise<void> {
         const camera = new BABYLON.ArcRotateCamera("camera", -Math.PI / 2, Math.PI / 2.5, 3, new BABYLON.Vector3(0, 0, 2.5), this);
         camera.position = new BABYLON.Vector3(0, 3, 20)
 
