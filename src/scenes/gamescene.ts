@@ -22,6 +22,9 @@ export class GameScene extends BaseScene {
     // Враги
     _enemies = new Array<Enemy>()
 
+    // Снаряды
+    _bullets = new Array<Bullet>()
+
     // Признак что игрок нажал на стрельбу
     _isFire: boolean
 
@@ -191,12 +194,15 @@ export class GameScene extends BaseScene {
         this._player = new PlayerEntity(this)
         await this._player.init()
 
-        let bullets = new Array<Bullet>()
+        this.disposer.addDisposableToDispose(this._player)
+
+        let bullets = this._bullets
         let enemies = this._enemies
         let scene = this
 
         // Обрабатывает выстрел
         this.disposer.addObserverToDispose(this._player.fireObservable.add(async x => {
+            console.log("FUCK")
             let bullet = new Bullet(this)
             await bullet.init()
             bullet.position = this._player.position.clone()
@@ -324,5 +330,22 @@ export class GameScene extends BaseScene {
         // this.debugLayer.show({
         //     embedMode: true
         // })
+    }
+
+    // Освобождает ресурсы
+    override dispose(): void {
+        this._bullets.forEach(x => {
+            x.dispose()
+        })
+
+        this._bullets = null
+
+        this._enemies.forEach(x => {
+            x.dispose()
+        })
+
+        this._enemies = null
+
+        super.dispose()
     }
 }

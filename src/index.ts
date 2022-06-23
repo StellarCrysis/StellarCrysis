@@ -1,13 +1,12 @@
 import { Game } from "./common/game"
-import { GameState } from "./states/gamestate"
-//import { Game } from "./scenes/gamescene"
+import { MainMenuState } from "./states/mainmenustate"
 
 // Входная точка
 class Index {
     // Запускает
     start() {
-        let gameState = new GameState()
-        Game.instance.setState(gameState)
+        let mainMenuState = new MainMenuState()
+        Game.instance.setState(mainMenuState)
     }
 }
 

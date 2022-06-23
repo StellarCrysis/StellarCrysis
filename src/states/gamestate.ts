@@ -33,5 +33,4 @@ export class GameState extends BaseState {
 
         this._hideLoadScene()
     }
-
 }

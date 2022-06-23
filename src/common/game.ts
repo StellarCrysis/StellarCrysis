@@ -13,7 +13,7 @@ export class Game {
     view: HTMLCanvasElement
 
     // Игровой движок
-    engine: BABYLON.Engine    
+    engine: BABYLON.Engine
 
     // Конструктор
     private constructor() {
@@ -27,6 +27,7 @@ export class Game {
         if (this._state != null)
             this._state.dispose()
 
+        this._state = state
         return state.init()
     }
 }

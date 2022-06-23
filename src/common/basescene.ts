@@ -16,8 +16,8 @@ export abstract class BaseScene extends BABYLON.Scene {
     abstract load(): Promise<void>    
 
     // Освобождает ресурсы
-    override dispose(): void {
-        this.disposer.disposeAll()
+    override dispose(): void {        
+        this.disposer.disposeAll()        
         super.dispose()
     }
 }

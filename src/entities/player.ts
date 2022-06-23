@@ -128,7 +128,7 @@ export class PlayerEntity extends Entity {
         }))
 
         // Обрабатывает ввод от игрока
-        this.disposer.addObserverToDispose(scene.onKeyboardObservable.add(x => {
+        this.disposer.addObserverToDispose(scene.onKeyboardObservable.add(x => {            
             switch (x.type) {
                 case BABYLON.KeyboardEventTypes.KEYDOWN:
                     switch (x.event.code) {

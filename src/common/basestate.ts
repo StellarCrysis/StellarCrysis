@@ -41,8 +41,8 @@ export abstract class BaseState {
     removeScene(scene: BaseScene) {
         let index = this._scenes.indexOf(scene)
         if (index > -1) {
-            this._scenes.splice(index, 1)
             scene.dispose()
+            this._scenes.splice(index, 1)
         }
     }
 
