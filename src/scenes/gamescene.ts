@@ -119,7 +119,7 @@ export class GameScene extends BaseScene {
         let time = 0
         let instances = []
 
-        this.disposer.addObserverToDispose(this.onBeforeRenderObservable.add(x => {
+        this.onBeforeRenderObservable.add(x => {
             if (x.deltaTime == undefined)
                 return;
 
@@ -141,7 +141,7 @@ export class GameScene extends BaseScene {
             });
 
             time += x.deltaTime
-        }))
+        })
     }
 
     // Создаёт графический интерфейс
@@ -184,17 +184,16 @@ export class GameScene extends BaseScene {
         panel.addControl(label)
         uiTexture.addControl(panel)
 
-        this.disposer.addObserverToDispose(this._onEnemyHitObservable.add((_) => {
+        this._onEnemyHitObservable.add((_) => {
             score += 1
             label.text = formatNumber(score)
-        }))
+        })
     }
 
     // Создаёт корабль
     async _createPlayer() {
         this._player = new PlayerEntity(this)
         await this._player.init()
-        this.disposer.addDisposableToDispose(this._player)
 
         let bullets = this._bullets
         let enemies = this._enemies
@@ -204,17 +203,16 @@ export class GameScene extends BaseScene {
         await bulletSpawner.load("particle.glb", (m) => {
             m.rotate(BABYLON.Axis.Y, BABYLON.Angle.FromDegrees(90).radians())
         })
-        this.disposer.addDisposableToDispose(bulletSpawner)
 
         // Обрабатывает выстрел
-        this.disposer.addObserverToDispose(this._player.fireObservable.add(async x => {
+        this._player.fireObservable.add(async x => {
             let bullet = new Bullet(bulletSpawner, this)
             await bullet.init()
             bullet.position = this._player.position.clone()
             bullets.push(bullet)
-        }))
+        })
 
-        this.disposer.addObserverToDispose(this.onBeforeRenderObservable.add(x => {
+        this.onBeforeRenderObservable.add(x => {
             if (x.deltaTime == undefined)
                 return;
 
@@ -231,7 +229,7 @@ export class GameScene extends BaseScene {
                         enemies.splice(ei, 1)
 
                         scene._onEnemyHitObservable.notifyObservers(true)
-                    }                    
+                    }
                 })
 
                 if (bullet.position.z < -100) {
@@ -239,7 +237,7 @@ export class GameScene extends BaseScene {
                     bullets.splice(bi, 1);
                 }
             })
-        }))
+        })
     }
 
     // Создаёт врагов
@@ -253,7 +251,6 @@ export class GameScene extends BaseScene {
         await enemySpawner.load("enemy.glb", (m) => {
             m.rotate(BABYLON.Axis.Y, BABYLON.Angle.FromDegrees(180).radians())
         })
-        this.disposer.addDisposableToDispose(enemySpawner)
 
         async function addEnemyInstance() {
             let enemy = new Enemy(enemySpawner, scene)
@@ -272,7 +269,7 @@ export class GameScene extends BaseScene {
         let ticker = 0
         let player = this._player
 
-        this.disposer.addObserverToDispose(this.onBeforeRenderObservable.add(x => {
+        this.onBeforeRenderObservable.add(x => {
             if (x.deltaTime == undefined)
                 return;
 
@@ -308,7 +305,7 @@ export class GameScene extends BaseScene {
             }
 
             ticker += x.deltaTime
-        }))
+        })
     }
 
     // Конструктор
@@ -333,22 +330,5 @@ export class GameScene extends BaseScene {
         // this.debugLayer.show({
         //     embedMode: true
         // })
-    }
-
-    // Освобождает ресурсы
-    override dispose(): void {
-        this._bullets.forEach(x => {
-            x.dispose()
-        })
-
-        this._bullets = null
-
-        this._enemies.forEach(x => {
-            x.dispose()
-        })
-
-        this._enemies = null
-
-        super.dispose()
     }
 }

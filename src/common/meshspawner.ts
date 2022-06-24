@@ -37,6 +37,16 @@ export class MeshSpawner implements BABYLON.IDisposable {
 
     // Возвращает экземляр
     recycle(): BABYLON.InstancedMesh {
+        for (let i = 0; i < this._spawned.length; i++) {
+            let spawned = this._spawned[i]
+            if (!spawned.isEnabled()) {
+                spawned.position.z = -1000
+                spawned.setEnabled(true)
+
+                return spawned
+            }
+        }
+
         this._spawnerMesh.setEnabled(true)
         let newItem = this._spawnerMesh.createInstance("inst")
         this._spawnerMesh.setEnabled(false)
@@ -48,13 +58,11 @@ export class MeshSpawner implements BABYLON.IDisposable {
     release(mesh: BABYLON.InstancedMesh) {
         let idx = this._spawned.indexOf(mesh)
         if (idx > -1)
-            this._spawned.splice(idx, 1)
-
-        mesh.dispose()
+            mesh.setEnabled(false)
     }
 
     // Освобождает ресурсы
-    dispose(): void {        
+    dispose(): void {
         this._spawned.forEach(x => {
             x.dispose()
         })

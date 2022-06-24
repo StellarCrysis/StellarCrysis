@@ -3,21 +3,12 @@ import { Disposer } from "./disposer"
 import { Game } from "./game"
 
 // Базовая сцена
-export abstract class BaseScene extends BABYLON.Scene {    
-    // Освобождает ресурсы
-    protected disposer = new Disposer()
-
+export abstract class BaseScene extends BABYLON.Scene {
     // Конструктор
     constructor() {
         super(Game.instance.engine)
     }
 
     // Загружает сцену
-    abstract load(): Promise<void>    
-
-    // Освобождает ресурсы
-    override dispose(): void {        
-        this.disposer.disposeAll()        
-        super.dispose()
-    }
+    abstract load(): Promise<void>
 }

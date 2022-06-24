@@ -82,31 +82,30 @@ export class PlayerEntity extends Entity {
         this._mesh.setParent(null)
         this.disposer.addDisposableToDispose(this._mesh)
 
-
         // Добавляет прицел
         this._spriteManager = new BABYLON.SpriteManager("aimManager", "textures/aim.png", 10, { width: 154, height: 150 }, this._scene)
         this.disposer.addDisposableToDispose(this._spriteManager)
+
         let aimSprite = new BABYLON.Sprite("tree", this._spriteManager)
         aimSprite.width = 1
         aimSprite.height = 1
         aimSprite.position = new BABYLON.Vector3(0, 0, -10)
 
-        scene.onBeforeRenderObservable.add(x => {
+        this.disposer.addObserverToDispose(scene.onBeforeRenderObservable.add(x => {
             if (x.deltaTime == undefined)
                 return;
 
             let pos = this._mesh.position.clone()
             pos.z = -15
             aimSprite.position = pos;
-        })
-
+        }))
 
         // Обрабатывает движение корабля и стрельбу
         let angleZ = 0
         let angleX = 0
         let fireTime = 0
 
-        let player = this
+        let player = this        
 
         this.disposer.addObserverToDispose(scene.onBeforeRenderObservable.add(x => {
             if (x.deltaTime == undefined)
