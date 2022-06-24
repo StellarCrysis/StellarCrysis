@@ -1,13 +1,10 @@
 import * as BABYLON from "@babylonjs/core"
-import { Entity } from "../common/entity";
+import { SpawnedEntity } from "../common/spawnedentity";
 
 // Снаряд
-export class Bullet extends Entity {
-    // Мэх из которого создаются другие мехи
-    static _instanceCreator: BABYLON.InstancedMesh
-
+export class Bullet extends SpawnedEntity {
     // Мех снаряда
-    _mesh: BABYLON.AbstractMesh
+    _mesh: BABYLON.InstancedMesh
 
     // Возвращает мех который определяет границы сущности
     get boundingMesh(): BABYLON.AbstractMesh {
@@ -25,29 +22,11 @@ export class Bullet extends Entity {
 
     // Инициализирует
     override async init(): Promise<void> {
-        if (Bullet._instanceCreator != null && Bullet._instanceCreator._scene != this._scene) {
-            Bullet._instanceCreator.dispose()
-            Bullet._instanceCreator = null
-        }
+        this._mesh = this._spawner.recycle()
+    }
 
-        // Создаёт создателя снарядов
-        if (Bullet._instanceCreator == null) {
-            // Загружает снаряд
-            let result = await BABYLON.SceneLoader.ImportMeshAsync(
-                "",
-                "./models/",
-                "particle.glb",
-                this._scene
-            )
-
-            // Снаряд
-            Bullet._instanceCreator = result.meshes[0].getChildren()[0] as BABYLON.InstancedMesh
-            Bullet._instanceCreator.rotate(BABYLON.Axis.Y, BABYLON.Angle.FromDegrees(90).radians())
-            Bullet._instanceCreator.position.z = -1000
-            Bullet._instanceCreator.setEnabled(false)
-        }
-
-        this._mesh = Bullet._instanceCreator.createInstance("bullet")
-        this.disposer.addDisposableToDispose(this._mesh)
+    // Освобождает
+    override dispose(): void {
+        this._spawner.release(this._mesh)
     }
 }

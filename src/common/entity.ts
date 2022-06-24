@@ -1,4 +1,5 @@
 import * as BABYLON from "@babylonjs/core"
+import { BaseScene } from "./basescene"
 import { Disposer } from "./disposer"
 
 // Абстрактная сущность
@@ -7,7 +8,7 @@ export abstract class Entity {
     protected disposer = new Disposer()
 
     // Сцена
-    protected _scene: BABYLON.Scene
+    protected _scene: BaseScene
 
     // Мех который определяет границы сущности
     abstract get boundingMesh(): BABYLON.AbstractMesh
@@ -16,7 +17,7 @@ export abstract class Entity {
     abstract init(): Promise<void>
 
     // Конструктор
-    constructor(scene: BABYLON.Scene) {
+    constructor(scene: BaseScene) {
         this._scene = scene
     }
 

@@ -8,6 +8,7 @@ import { PlayerEntity } from "../entities/player";
 import { Bullet } from "../entities/bullet";
 import { Enemy } from "../entities/enemy";
 import { BaseScene } from "../common/basescene";
+import { MeshSpawner } from "../common/meshspawner";
 
 // Возвращает случайное число между min и max
 function _getRandomArbitrary(min, max): number {
@@ -156,7 +157,7 @@ export class GameScene extends BaseScene {
             return res.join("")
         }
 
-        var uiTexture = GUI.AdvancedDynamicTexture.CreateFullscreenUI(
+        let uiTexture = GUI.AdvancedDynamicTexture.CreateFullscreenUI(
             "UI", true, this
         );
 
@@ -193,17 +194,21 @@ export class GameScene extends BaseScene {
     async _createPlayer() {
         this._player = new PlayerEntity(this)
         await this._player.init()
-
         this.disposer.addDisposableToDispose(this._player)
 
         let bullets = this._bullets
         let enemies = this._enemies
         let scene = this
 
+        let bulletSpawner = new MeshSpawner(scene)
+        await bulletSpawner.load("particle.glb", (m) => {
+            m.rotate(BABYLON.Axis.Y, BABYLON.Angle.FromDegrees(90).radians())
+        })
+        this.disposer.addDisposableToDispose(bulletSpawner)
+
         // Обрабатывает выстрел
         this.disposer.addObserverToDispose(this._player.fireObservable.add(async x => {
-            console.log("FUCK")
-            let bullet = new Bullet(this)
+            let bullet = new Bullet(bulletSpawner, this)
             await bullet.init()
             bullet.position = this._player.position.clone()
             bullets.push(bullet)
@@ -213,32 +218,27 @@ export class GameScene extends BaseScene {
             if (x.deltaTime == undefined)
                 return;
 
-            for (let i = 0; i < bullets.length; i++) {
-                let bullet = bullets[i]
+            bullets.forEach((bullet, bi) => {
                 bullet.position.z -= 0.05 * x.deltaTime
 
-                for (let y = 0; y < enemies.length; y++) {
-                    let enemy = enemies[y]
+                enemies.forEach((enemy, ei) => {
                     // Обрабатывает попадание снаряда по врагу
                     if (bullet.intersectsEntity(enemy)) {
                         scene._addExplosion(enemy.position)
                         enemy.dispose()
                         bullet.dispose()
-                        bullets.splice(i, 1)
-                        enemies.splice(y, 1)
-                        i--
-                        y--
+                        bullets.splice(bi, 1)
+                        enemies.splice(ei, 1)
 
                         scene._onEnemyHitObservable.notifyObservers(true)
-                    }
-                }
+                    }                    
+                })
 
                 if (bullet.position.z < -100) {
                     bullet.dispose()
-                    bullets.splice(i, 1);
-                    i--
+                    bullets.splice(bi, 1);
                 }
-            }
+            })
         }))
     }
 
@@ -247,11 +247,16 @@ export class GameScene extends BaseScene {
         let enemies = this._enemies
 
         let wasInstanced = false
-
         let scene = this
 
+        let enemySpawner = new MeshSpawner(scene)
+        await enemySpawner.load("enemy.glb", (m) => {
+            m.rotate(BABYLON.Axis.Y, BABYLON.Angle.FromDegrees(180).radians())
+        })
+        this.disposer.addDisposableToDispose(enemySpawner)
+
         async function addEnemyInstance() {
-            let enemy = new Enemy(scene)
+            let enemy = new Enemy(enemySpawner, scene)
             await enemy.init()
             enemy.position.x = _getRandomArbitrary(-5, 5)
             enemy.position.y = _getRandomArbitrary(-5, 5)
@@ -260,7 +265,7 @@ export class GameScene extends BaseScene {
             wasInstanced = true
         }
 
-        for (var i = 0; i < 5; i++) {
+        for (let i = 0; i < 5; i++) {
             addEnemyInstance()
         }
 
@@ -273,13 +278,12 @@ export class GameScene extends BaseScene {
 
             // После инстансинга нельзя проверять intersectsMesh, будут неправильно проверятся коллизии
             if (!wasInstanced) {
-                for (let i = 0; i < enemies.length; i++) {
-                    let enemy = enemies[i]
+                enemies.forEach((enemy, ei) => {
                     if (player.intersectsEntity(enemy)) {
                         this._addExplosion(player.position.clone())
                         player.dispose()
                         enemy.dispose()
-                        enemies.splice(i, 1);
+                        enemies.splice(ei, 1);
 
                         scene._showGameOver()
                     }
@@ -290,11 +294,10 @@ export class GameScene extends BaseScene {
                         this._addExplosion(enemy.position.clone())
                         player.dispose()
                         enemy.dispose()
-                        enemies.splice(i, 1);
+                        enemies.splice(ei, 1);
                         scene._showGameOver()
-                        i--
                     }
-                }
+                })
             } else {
                 wasInstanced = false
             }
@@ -318,7 +321,7 @@ export class GameScene extends BaseScene {
         const camera = new BABYLON.ArcRotateCamera("camera", -Math.PI / 2, Math.PI / 2.5, 3, new BABYLON.Vector3(0, 0, 2.5), this);
         camera.position = new BABYLON.Vector3(0, 3, 20)
 
-        var light = new BABYLON.HemisphericLight("point", new BABYLON.Vector3(0.1, 0.4, -1), this);
+        let light = new BABYLON.HemisphericLight("point", new BABYLON.Vector3(0.1, 0.4, -1), this);
 
         this._createEnvironment()
         await this._createPlayer()
