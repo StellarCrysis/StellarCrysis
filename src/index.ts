@@ -1,11 +1,15 @@
 import { Game } from "./common/game"
+import { LoadScene } from "./scenes/loadscene"
 import { MainMenuState } from "./states/mainmenustate"
 
 // Входная точка
 class Index {
     // Запускает
-    start() {
+    async start() {
         let mainMenuState = new MainMenuState()
+        // let loaderScene = new LoadScene()
+        // await loaderScene.load()
+        // Game.instance.setLoaderScene(loaderScene)
         Game.instance.setState(mainMenuState)
     }
 }

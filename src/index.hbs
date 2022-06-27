@@ -9,11 +9,19 @@
 
   <title>Simple 3D Scroller</title>
 
-  <link rel="stylesheet" href="styles.css">    
+  <link rel="stylesheet" href="styles.css">
 </head>
 
 <body>
   <div id="canvas-container">
+    <div id="loader">
+      <div class="outer">
+        <div class="inner">
+          <div class="progress"></div>
+          <div class="caption">Загружается</div>
+        </div>
+      </div>
+    </div>
     <canvas id="view"></canvas>
   </div>
 </body>

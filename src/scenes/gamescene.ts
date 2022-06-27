@@ -98,22 +98,23 @@ export class GameScene extends BaseScene {
 
 
     // Создаёт окружение
-    _createEnvironment() {
-        const skybox = BABYLON.MeshBuilder.CreateBox("skyBox", { size: 500 }, this);
-        const skyboxMaterial = new BABYLON.StandardMaterial("skyBox", this);
-        skyboxMaterial.backFaceCulling = false;
-        skyboxMaterial.reflectionTexture = new BABYLON.CubeTexture("textures/skybox/skybox", this);
-        skyboxMaterial.reflectionTexture.coordinatesMode = BABYLON.Texture.SKYBOX_MODE;
-        skyboxMaterial.diffuseColor = new BABYLON.Color3(0, 0, 0);
-        skyboxMaterial.specularColor = new BABYLON.Color3(0, 0, 0);
-        skybox.material = skyboxMaterial;
+    async _createEnvironment() {
+        const skybox = BABYLON.MeshBuilder.CreateBox("skyBox", { size: 500 }, this)
+        const skyboxMaterial = new BABYLON.StandardMaterial("skyBox", this)
+        skyboxMaterial.backFaceCulling = false
+
+        skyboxMaterial.reflectionTexture = new BABYLON.CubeTexture("textures/skybox/skybox", this)
+        skyboxMaterial.reflectionTexture.coordinatesMode = BABYLON.Texture.SKYBOX_MODE
+        skyboxMaterial.diffuseColor = new BABYLON.Color3(0, 0, 0)
+        skyboxMaterial.specularColor = new BABYLON.Color3(0, 0, 0)
+        skybox.material = skyboxMaterial
 
         const myPoints = [
             new BABYLON.Vector3(0, 0, 0),
             new BABYLON.Vector3(0, 0, 5),
         ]
 
-        let line = BABYLON.MeshBuilder.CreateLines("lines", { points: myPoints });
+        let line = BABYLON.MeshBuilder.CreateLines("lines", { points: myPoints })
         line.position.z = -200
 
         let time = 0
@@ -320,7 +321,7 @@ export class GameScene extends BaseScene {
 
         let light = new BABYLON.HemisphericLight("point", new BABYLON.Vector3(0.1, 0.4, -1), this);
 
-        this._createEnvironment()
+        await this._createEnvironment()
         await this._createPlayer()
         await this._createEnemySpawner()
         this._createUi()

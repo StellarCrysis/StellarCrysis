@@ -1,26 +1,12 @@
 import { BaseState } from "../common/basestate";
+import { Game } from "../common/game";
 import { GameScene } from "../scenes/gamescene";
-import { LoadScene } from "../scenes/loadscene";
 
 // Состояние игры
-export class GameState extends BaseState {
-    // Сцена загрузки
-    _loadScreen: LoadScene
-
-    // Показывает сцену загрузки
-    async _showLoadScene(): Promise<void> {
-        this._loadScreen = new LoadScene()
-        await this.loadScene(this._loadScreen)
-    }
-
-    // Скрывает сцену загрузки
-    _hideLoadScene() {
-        this.removeScene(this._loadScreen)
-    }
-
+export class GameState extends BaseState {        
     // Инициализирует
     async init(): Promise<void> {
-        await this._showLoadScene()
+        Game.instance.showLoader()
 
         let gameScene = new GameScene()
         this.disposer.addObserverToDispose(gameScene.onRestartGameObservable.add(async _ => {
@@ -28,9 +14,9 @@ export class GameState extends BaseState {
 
             await this.init();
         }))
+        
+        await this.loadScene(gameScene)        
 
-        await this.loadScene(gameScene)
-
-        this._hideLoadScene()
+        Game.instance.hideLoader()
     }
 }

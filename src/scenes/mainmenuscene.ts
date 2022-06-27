@@ -5,13 +5,15 @@ import { BaseScene } from "../common/basescene";
 // Основная игровая сцена
 export class MainMenuScene extends BaseScene {
     // Обозреватель нажатия
-    onNewGameClick : BABYLON.Observable<GUI.Vector2WithInfo>
+    onNewGameClick: BABYLON.Observable<GUI.Vector2WithInfo>
+
+    uiTexture: GUI.AdvancedDynamicTexture
 
     // Загружает сцену
     async load(): Promise<void> {
         const camera = new BABYLON.ArcRotateCamera("camera", -Math.PI / 2, Math.PI / 2.5, 3, new BABYLON.Vector3(0, 0, 2.5), this);
 
-        var uiTexture = GUI.AdvancedDynamicTexture.CreateFullscreenUI(
+        this.uiTexture = GUI.AdvancedDynamicTexture.CreateFullscreenUI(
             "UI", true, this
         )
 
@@ -23,6 +25,6 @@ export class MainMenuScene extends BaseScene {
 
         this.onNewGameClick = button.onPointerClickObservable
 
-        uiTexture.addControl(button)
+        this.uiTexture.addControl(button)
     }
 }
