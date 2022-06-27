@@ -11,11 +11,17 @@ export class MainMenuScene extends BaseScene {
 
     // Загружает сцену
     async load(): Promise<void> {
+        this.clearColor = new BABYLON.Color4(0, 0, 0)
+
         const camera = new BABYLON.ArcRotateCamera("camera", -Math.PI / 2, Math.PI / 2.5, 3, new BABYLON.Vector3(0, 0, 2.5), this);
 
         this.uiTexture = GUI.AdvancedDynamicTexture.CreateFullscreenUI(
             "UI", true, this
         )
+
+        let image = new GUI.Image("background", "textures/main_menu_back.png")
+        image.width = "800px"
+        image.height = "600px"
 
         let button = GUI.Button.CreateSimpleButton("button", "Начать игру")
         button.paddingTop = "40px"
@@ -25,6 +31,7 @@ export class MainMenuScene extends BaseScene {
 
         this.onNewGameClick = button.onPointerClickObservable
 
+        this.uiTexture.addControl(image)
         this.uiTexture.addControl(button)
     }
 }
