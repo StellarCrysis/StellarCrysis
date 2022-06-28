@@ -5,7 +5,7 @@ import { BaseScene } from "../common/basescene";
 // Основная игровая сцена
 export class MainMenuScene extends BaseScene {
     // Обозреватель нажатия
-    onNewGameClick: BABYLON.Observable<GUI.Vector2WithInfo>
+    onNewGameClick = new BABYLON.Observable<GUI.Vector2WithInfo>()
 
     uiTexture: GUI.AdvancedDynamicTexture
 
@@ -29,7 +29,18 @@ export class MainMenuScene extends BaseScene {
         button.height = "100px"
         button.color = "#FFFFFF"
 
-        this.onNewGameClick = button.onPointerClickObservable
+        var sound = new BABYLON.Sound("sound", "sound/sfx_menu_select2.wav", this, null, {
+            loop: false
+        });
+
+        button.onPointerClickObservable.add(e => {
+            sound.play()
+            setTimeout(() => {
+                this.onNewGameClick.notifyObservers(e)
+            }, 500)
+
+            button.onPointerClickObservable.clear()
+        })
 
         this.uiTexture.addControl(image)
         this.uiTexture.addControl(button)

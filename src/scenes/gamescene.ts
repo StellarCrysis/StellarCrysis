@@ -17,6 +17,12 @@ function _getRandomArbitrary(min, max): number {
 
 // Основная игровая сцена
 export class GameScene extends BaseScene {
+    // Звук взрыва
+    _explosionSound: BABYLON.Sound
+
+    // Звук нажатия
+    _clickSound: BABYLON.Sound
+
     // Игрок
     _player: PlayerEntity
 
@@ -71,7 +77,11 @@ export class GameScene extends BaseScene {
         uiTexture.addControl(rect)
 
         button.onPointerClickObservable.add(x => {
-            this.onRestartGameObservable.notifyObservers(true)
+            this._clickSound.play()
+            setTimeout(() => {
+                this.onRestartGameObservable.notifyObservers(true)
+            }, 500)
+            button.onPointerClickObservable.clear()
         })
     }
 
@@ -90,6 +100,8 @@ export class GameScene extends BaseScene {
         particleSystem.color1 = BABYLON.Color4.FromHexString("#FFAF02")
         particleSystem.emitter = place.clone()
         particleSystem.start();
+
+        this._explosionSound.play()
 
         setTimeout(() => {
             particleSystem.dispose()
@@ -205,8 +217,13 @@ export class GameScene extends BaseScene {
             m.rotate(BABYLON.Axis.Y, BABYLON.Angle.FromDegrees(90).radians())
         })
 
+        var sound = new BABYLON.Sound("sound", "sound/sfx_sounds_impact8.wav", this, null, {
+            loop: false
+        });
+
         // Обрабатывает выстрел
         this._player.fireObservable.add(async x => {
+            sound.play()
             let bullet = new Bullet(bulletSpawner, this)
             await bullet.init()
             bullet.position = this._player.position.clone()
@@ -320,6 +337,14 @@ export class GameScene extends BaseScene {
         camera.position = new BABYLON.Vector3(0, 3, 20)
 
         let light = new BABYLON.HemisphericLight("point", new BABYLON.Vector3(0.1, 0.4, -1), this);
+
+        this._explosionSound = new BABYLON.Sound("sound", "sound/sfx_exp_short_soft2.wav", this, null, {
+            loop: false
+        });
+
+        this._clickSound = new BABYLON.Sound("sound", "sound/sfx_menu_select2.wav", this, null, {
+            loop: false
+        });
 
         await this._createEnvironment()
         await this._createPlayer()
