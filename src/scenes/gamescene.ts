@@ -218,7 +218,8 @@ export class GameScene extends BaseScene {
         })
 
         var sound = new BABYLON.Sound("sound", "sound/sfx_sounds_impact8.wav", this, null, {
-            loop: false
+            loop: false,
+            volume: 0.5
         });
 
         // Обрабатывает выстрел
@@ -339,7 +340,8 @@ export class GameScene extends BaseScene {
         let light = new BABYLON.HemisphericLight("point", new BABYLON.Vector3(0.1, 0.4, -1), this);
 
         this._explosionSound = new BABYLON.Sound("sound", "sound/sfx_exp_short_soft2.wav", this, null, {
-            loop: false
+            loop: false,
+            volume: 0.3
         });
 
         this._clickSound = new BABYLON.Sound("sound", "sound/sfx_menu_select2.wav", this, null, {

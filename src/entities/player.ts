@@ -105,7 +105,10 @@ export class PlayerEntity extends Entity {
         let angleX = 0
         let fireTime = 0
 
-        let player = this        
+        let player = this
+
+        const maxX = 7
+        const maxY = 7
 
         this.disposer.addObserverToDispose(scene.onBeforeRenderObservable.add(x => {
             if (x.deltaTime == undefined)
@@ -113,6 +116,12 @@ export class PlayerEntity extends Entity {
 
             player._mesh.position.x += player._inputVector.x * x.deltaTime * 0.005;
             player._mesh.position.y += player._inputVector.y * x.deltaTime * 0.005;
+
+            if (Math.abs(player._mesh.position.x) > maxX)
+                player._mesh.position.x = Math.sign(player._mesh.position.x) * maxX
+
+            if (Math.abs(player._mesh.position.y) > maxY)
+                player._mesh.position.y = Math.sign(player._mesh.position.y) * maxY
 
             angleZ = BABYLON.Scalar.Lerp(angleZ, -10 * (player._inputVector.x) * 0.0174533, 0.1)
             angleX = BABYLON.Scalar.Lerp(angleX, -10 * (player._inputVector.y) * 0.0174533, 0.1)
@@ -127,7 +136,7 @@ export class PlayerEntity extends Entity {
         }))
 
         // Обрабатывает ввод от игрока
-        this.disposer.addObserverToDispose(scene.onKeyboardObservable.add(x => {            
+        this.disposer.addObserverToDispose(scene.onKeyboardObservable.add(x => {
             switch (x.type) {
                 case BABYLON.KeyboardEventTypes.KEYDOWN:
                     switch (x.event.code) {
