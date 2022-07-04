@@ -1,15 +1,22 @@
 import { Game } from "./common/game"
-import { LoadScene } from "./scenes/loadscene"
+import { Localizator } from "./common/localizator"
 import { MainMenuState } from "./states/mainmenustate"
 
 // Входная точка
 class Index {
     // Запускает
     async start() {
+        Localizator.setLocale("ru")
+        Localizator.setLocaleData(
+            new Map<string, Map<string, string>>([
+                ["ru", new Map<string, string>([
+                    ["start_game", "Начать игру"]
+                ])]
+            ])
+        )
+
+
         let mainMenuState = new MainMenuState()
-        // let loaderScene = new LoadScene()
-        // await loaderScene.load()
-        // Game.instance.setLoaderScene(loaderScene)
         Game.instance.setState(mainMenuState)
     }
 }
