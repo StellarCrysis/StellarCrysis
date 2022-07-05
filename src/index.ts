@@ -6,15 +6,23 @@ import { MainMenuState } from "./states/mainmenustate"
 class Index {
     // Запускает
     async start() {
-        Localizator.setLocale("ru")
+        Localizator.setLocale("en")
         Localizator.setLocaleData(
             new Map<string, Map<string, string>>([
                 ["ru", new Map<string, string>([
-                    ["start_game", "Начать игру"]
+                    ["startgame", "Начать игру"],
+                    ["loading", "Загружается..."],
+                    ["gameover", "Игра окончена"],
+                    ["restart", "Начать заного"],
+                ])],
+                ["en", new Map<string, string>([
+                    ["startgame", "Start Game"],
+                    ["loading", "Loading..."],
+                    ["gameover", "Game Over"],
+                    ["restart", "Restart"],
                 ])]
             ])
         )
-
 
         let mainMenuState = new MainMenuState()
         Game.instance.setState(mainMenuState)

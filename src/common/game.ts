@@ -1,6 +1,7 @@
 import * as BABYLON from "@babylonjs/core"
 import { BaseScene } from "./basescene";
 import { BaseState } from "./basestate";
+import { Localizator } from "./localizator";
 
 // Класс игры
 export class Game {
@@ -12,6 +13,9 @@ export class Game {
 
     // Вид загрузки
     private _loaderView: HTMLElement
+
+    // Текст загрузки
+    private _loaderCaption: HTMLElement
 
     // HTML канвас игры
     view: HTMLCanvasElement
@@ -25,12 +29,13 @@ export class Game {
         this.engine = new BABYLON.Engine(this.view, true)
 
         this._loaderView = document.getElementById("loader")
-        //this._loaderEngine = new BABYLON.Engine(this.view, true)
+        this._loaderCaption = document.getElementById("loader-caption")
     }
 
     // Отображает загрузчик
     showLoader() {
         this._loaderView.style.display = "block"
+        this._loaderCaption.innerText = Localizator.getString("loading")
     }
 
     // Скрывает загрузчик

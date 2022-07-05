@@ -4,7 +4,7 @@ export class Localizator {
     private static _locale: string = "ru"
 
     // Данные по строкам
-    private static _data = new Map<string, Map<string, string>>();    
+    private static _data = new Map<string, Map<string, string>>();
 
     // Устанавливает локаль
     static setLocale(locale: string) {
@@ -12,12 +12,16 @@ export class Localizator {
     }
 
     // Устанавливает данные локали
-    static setLocaleData(data : Map<string, Map<string, string>>) {
+    static setLocaleData(data: Map<string, Map<string, string>>) {
         Localizator._data = data
     }
 
     // Возвращает строку для текущей локали
     static getString(key: string): string {
-        return Localizator._data[key]
+        let localeData = Localizator._data.get(this._locale)        
+        if (localeData == undefined || localeData == null)
+            return null;
+
+        return localeData.get(key)
     }
 }

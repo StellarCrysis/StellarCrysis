@@ -1,6 +1,7 @@
 import * as GUI from "@babylonjs/gui"
 import * as BABYLON from "@babylonjs/core"
 import { BaseScene } from "../common/basescene";
+import { Localizator } from "../common/localizator";
 
 // Основная игровая сцена
 export class MainMenuScene extends BaseScene {
@@ -23,7 +24,7 @@ export class MainMenuScene extends BaseScene {
         image.width = "800px"
         image.height = "600px"
 
-        let button = GUI.Button.CreateSimpleButton("button", "Начать игру")
+        let button = GUI.Button.CreateSimpleButton("button",  Localizator.getString("startgame"))
         button.paddingTop = "40px"
         button.width = "200px"
         button.height = "100px"

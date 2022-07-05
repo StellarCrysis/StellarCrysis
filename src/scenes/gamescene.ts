@@ -9,6 +9,7 @@ import { Bullet } from "../entities/bullet";
 import { Enemy } from "../entities/enemy";
 import { BaseScene } from "../common/basescene";
 import { MeshSpawner } from "../common/meshspawner";
+import { Localizator } from "../common/localizator";
 
 // Возвращает случайное число между min и max
 function _getRandomArbitrary(min, max): number {
@@ -58,13 +59,13 @@ export class GameScene extends BaseScene {
         panel.height = "100%"
         panel.isVertical = true
 
-        let label = new GUI.TextBlock("text", "Игра окончена")
+        let label = new GUI.TextBlock("text", Localizator.getString("gameover"))
         label.color = "#FFFFFF"
         label.fontSize = "40pt"
         label.width = "100%"
         label.height = "80px"
 
-        let button = GUI.Button.CreateSimpleButton("button", "Начать заного")
+        let button = GUI.Button.CreateSimpleButton("button", Localizator.getString("restart"))
         button.paddingTop = "40px"
         button.width = "200px"
         button.height = "100px"
