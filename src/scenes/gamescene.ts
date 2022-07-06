@@ -36,6 +36,9 @@ export class GameScene extends BaseScene {
     // Признак что игрок нажал на стрельбу
     _isFire: boolean
 
+    // Признак что игра завершена
+    _isGameOver: boolean = false
+
     // Уведомляет о попадании
     _onEnemyHitObservable = new BABYLON.Observable<boolean>()
 
@@ -44,6 +47,8 @@ export class GameScene extends BaseScene {
 
     // Отображает Game Over
     _showGameOver() {
+        this._isGameOver = true
+
         let uiTexture = GUI.AdvancedDynamicTexture.CreateFullscreenUI(
             "UI", true, this
         );
@@ -232,6 +237,7 @@ export class GameScene extends BaseScene {
             bullets.push(bullet)
         })
 
+        // Обрабатывает логику снарядов
         this.onBeforeRenderObservable.add(x => {
             if (x.deltaTime == undefined)
                 return;
@@ -252,6 +258,7 @@ export class GameScene extends BaseScene {
                     }
                 })
 
+                // Обрабатывает выход снаряда за границы игровой области
                 if (bullet.position.z < -100) {
                     bullet.dispose()
                     bullets.splice(bi, 1);
@@ -289,6 +296,7 @@ export class GameScene extends BaseScene {
         let ticker = 0
         let player = this._player
 
+        // Обрабатывает логику вражеских кораблей
         this.onBeforeRenderObservable.add(x => {
             if (x.deltaTime == undefined)
                 return;
@@ -296,7 +304,8 @@ export class GameScene extends BaseScene {
             // После инстансинга нельзя проверять intersectsMesh, будут неправильно проверятся коллизии
             if (!wasInstanced) {
                 enemies.forEach((enemy, ei) => {
-                    if (player.intersectsEntity(enemy)) {
+                    // Столкновение игрока с врагом
+                    if (!scene._isGameOver && (player.intersectsEntity(enemy))) {
                         this._addExplosion(player.position.clone())
                         player.dispose()
                         enemy.dispose()
@@ -305,8 +314,11 @@ export class GameScene extends BaseScene {
                         scene._showGameOver()
                     }
 
+                    // Движение игрока
                     enemy.position.z += 0.01 * x.deltaTime
-                    if (enemy.position.z > 10) {
+
+                    // Выход врага за игровую область
+                    if (!scene._isGameOver && (enemy.position.z > 10)) {
                         this._addExplosion(player.position.clone())
                         this._addExplosion(enemy.position.clone())
                         player.dispose()
@@ -353,8 +365,6 @@ export class GameScene extends BaseScene {
         await this._createPlayer()
         await this._createEnemySpawner()
         this._createUi()
-
-        //this._showGameOver()
 
         // this.debugLayer.show({
         //     embedMode: true
